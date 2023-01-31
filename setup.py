@@ -25,7 +25,7 @@ setuptools.setup(
     classifiers=[],
     python_requires=">=3.9",
     install_requires=[
-        "fftarray>=0.4a0",
+        "fftarray",
         "numpy>=1.21",
         "scipy",
         "jax>=0.4.2",

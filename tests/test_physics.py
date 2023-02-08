@@ -1,10 +1,13 @@
 from jax.config import config
 config.update("jax_enable_x64", True)
+import torch
+torch.set_default_dtype(torch.float64)
 
 from fftarray import FFTDimension
 from fftarray.backends.jax_backend import JaxTensorLib, fft_array_scan
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
+from fftarray.backends.torch_backend import TorchTensorLib
 from fftarray.backends.tensor_lib import TensorLib
 from matterwave import split_step, get_e_kin, norm
 from matterwave.wf_tools import expectation_value, get_ground_state
@@ -24,7 +27,7 @@ import pytest
 # implements the split_step method by looking at the wavefunction's
 # total energy after a few steps
 
-backends = ["numpy", "jax", "pyfftw"]
+backends = ["numpy", "jax", "pyfftw", "torch"]
 
 def get_tensor_lib(backend: str):
     if backend == "numpy":
@@ -33,6 +36,8 @@ def get_tensor_lib(backend: str):
         return JaxTensorLib(precision="fp64")
     elif backend == "pyfftw":
         return PyFFTWTensorLib(precision="fp64")
+    elif backend == "torch":
+        return TorchTensorLib(precision="fp64")
 
 @pytest.mark.parametrize("backend", backends)
 @pytest.mark.parametrize("eager", [False, True])

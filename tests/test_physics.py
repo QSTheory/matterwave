@@ -28,11 +28,11 @@ backends = ["numpy", "jax", "pyfftw"]
 
 def get_tensor_lib(backend: str):
     if backend == "numpy":
-        return NumpyTensorLib()
+        return NumpyTensorLib(precision="fp64")
     elif backend == "jax":
-        return JaxTensorLib()
+        return JaxTensorLib(precision="fp64")
     elif backend == "pyfftw":
-        return PyFFTWTensorLib()
+        return PyFFTWTensorLib(precision="fp64")
 
 @pytest.mark.parametrize("backend", backends)
 @pytest.mark.parametrize("eager", [False, True])
@@ -90,7 +90,6 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         n=2048,
         default_tlib=tensor_lib,
         default_eager=eager,
-        default_force_precision="fp64",
     )
     wf = get_ground_state(x_dim, omega=omega_x_init, mass=mass)
 
@@ -134,7 +133,6 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
         n=2048,
         default_tlib=tensor_lib,
         default_eager=eager,
-        default_force_precision="fp64",
     )
     wf = get_ground_state(x_dim, mass=mass, omega=omega_x)
     # quantum harmonic oscillator

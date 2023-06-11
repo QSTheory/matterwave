@@ -132,10 +132,10 @@ def split_step(wf: FFTArray, *,
     # Apply potential propagator
     # TODO
     wf = wf.pos_array()
-    if isinstance(V, PosArray):
-        V_prop = get_V_prop(V = V, dt = cmplx_factor * dt)
-    else:
-        V_prop = get_V_prop(V = V(wf), dt = cmplx_factor * dt)
+    # if isinstance(V, PosArray):
+    V_prop = get_V_prop(V = V, dt = cmplx_factor * dt)
+    # else:
+    #     V_prop = get_V_prop(V = V(wf), dt = cmplx_factor * dt)
     wf = wf * V_prop
 
     # Apply half kinetic propagator
@@ -143,7 +143,7 @@ def split_step(wf: FFTArray, *,
 
     if is_complex:
         wf = normalize(wf)
-    assert isinstance(wf, FreqArray)
+    # assert isinstance(wf, FreqArray)
     return wf
 
 

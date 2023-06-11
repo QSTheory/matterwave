@@ -156,7 +156,6 @@ def split_step(wf: FFTArray, *,
 # TODO: Do a proper numerical analysis.
 # Maybe use https://herbie.uwplse.org/
 # TODO Benchmark performance
-# TODO Implement lazy propagation
 def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FreqArray:
     """Freely propagates the given wavefunction in time:
 

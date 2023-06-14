@@ -186,7 +186,7 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FreqAr
     # k_sq = reduce(lambda a,b: a+b, [dim.freq_array()**2. for dim in wf.dims])
     # return wf.freq_array() * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
     res = wf.freq_array()
-    factor = -dt * h / (2*mass)
+    factor = (-dt / (2*mass)) * (hbar * (2*np.pi)**2)
 
     for dim in wf.dims:
         #k^2 = (idx*dk + k0)^2 = idx^2*dk^2 + 2*idx*dk*k0 + k0^2

@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.constants import hbar, h
+from scipy.constants import hbar
 from typing import Callable, Union, Any
 
 from .wf_tools import normalize

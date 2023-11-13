@@ -183,17 +183,19 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FreqAr
     # => This formulation uses less numerical range to enable single precision floats
 
     # In 3D: kx**2+ky**2+kz**2
-    # k_sq = reduce(lambda a,b: a+b, [dim.freq_array()**2. for dim in wf.dims])
-    # return wf.freq_array() * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
-    res = wf.freq_array()
-    factor = (-dt / (2*mass)) * (hbar * (2*np.pi)**2)
+    from functools import reduce
+    k_sq = reduce(lambda a,b: a+b, [(dim.freq_array()*2*np.pi)**2. for dim in wf.dims])
+    return wf.freq_array() * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
 
-    for dim in wf.dims:
-        #k^2 = (idx*dk + k0)^2 = idx^2*dk^2 + 2*idx*dk*k0 + k0^2
-        phase_factors =  PhaseFactors({
-            2: factor*(dim.d_freq**2),
-            1: factor*(2*dim.d_freq*dim.freq_min),
-            0: factor*dim.freq_min**2,
-        })
-        res = res.add_phase_factor(dim.name, "propagator_phase", phase_factors)
-    return res
+    # res = wf.freq_array()
+    # factor = (-dt / (2*mass)) * (hbar * (2*np.pi)**2)
+
+    # for dim in wf.dims:
+    #     #k^2 = (idx*dk + k0)^2 = idx^2*dk^2 + 2*idx*dk*k0 + k0^2
+    #     phase_factors =  PhaseFactors({
+    #         2: factor*(dim.d_freq**2),
+    #         1: factor*(2*dim.d_freq*dim.freq_min),
+    #         0: factor*dim.freq_min**2,
+    #     })
+    #     res = res.add_phase_factor(dim.name, "propagator_phase", phase_factors)
+    # return res

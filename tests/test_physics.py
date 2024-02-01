@@ -1,8 +1,10 @@
 from jax.config import config
 config.update("jax_enable_x64", True)
 
+from jax.lax import scan
+
 from fftarray import FFTDimension
-from fftarray.backends.jax_backend import JaxTensorLib, fft_array_scan
+from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
 from fftarray.backends.tensor_lib import TensorLib
@@ -60,7 +62,13 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
         return wf, None
 
     if backend == "jax":
-        wf, _ = fft_array_scan(f=split_step_scan_iteration, init=wf, xs=None, length=100)
+        wf, _ = scan(
+            f=split_step_scan_iteration,
+            # TODO: factors_applied will be False when lazyness is implemented
+            init=wf.into(space="freq", factors_applied=True),
+            xs=None,
+            length=100,
+        )
     else:
         for _ in range(100):
             wf, _ = split_step_scan_iteration(wf)
@@ -104,7 +112,13 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         return wf, None
 
     if backend == "jax":
-        wf, _ = fft_array_scan(f=step, init=wf, xs=None, length=128)
+        wf, _ = scan(
+            f=step,
+            # TODO: factors_applied will be False when lazyness is implemented
+            init=wf.into(space="freq", factors_applied=True),
+            xs=None,
+            length=128,
+        )
     else:
         for _ in range(128):
             wf, _ = step(wf)

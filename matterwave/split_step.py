@@ -3,8 +3,7 @@ from scipy.constants import hbar, h
 from typing import Callable, Union, Any
 
 from .wf_tools import normalize
-from fftarray import FFTArray, PosArray, FreqArray
-from fftarray.fft_array import PhaseFactors
+from fftarray import FFTArray
 from functools import reduce
 
 # Get the position propagator for a specified kernel and dt.
@@ -32,8 +31,8 @@ def get_V_prop(V: FFTArray, dt: complex) -> FFTArray:
 def split_step(wf: FFTArray, *,
                dt: float,
                mass: float,
-               V: Union[PosArray, Callable[[PosArray], Any]], # numpy ufuncs distort the type signature, actually this should be PosArray
-               is_complex: bool = False) -> FreqArray:
+               V: Union[FFTArray, Callable[[FFTArray], Any]], # numpy ufuncs distort the type signature, actually this should be PosArray
+               is_complex: bool = False) -> FFTArray:
     """Split-step is a pseudo-spectral method to solve the time-dependent
     Schrödinger equation. The time evolution of a wavefunction is given by:
 
@@ -131,8 +130,8 @@ def split_step(wf: FFTArray, *,
 
     # Apply potential propagator
     # TODO
-    wf = wf.pos_array()
-    if isinstance(V, PosArray):
+    wf = wf.into(space="pos")
+    if isinstance(V, FFTArray):
         V_prop = get_V_prop(V = V, dt = cmplx_factor * dt)
     else:
         V_prop = get_V_prop(V = V(wf), dt = cmplx_factor * dt)
@@ -143,7 +142,6 @@ def split_step(wf: FFTArray, *,
 
     if is_complex:
         wf = normalize(wf)
-    assert isinstance(wf, FreqArray)
     return wf
 
 
@@ -156,7 +154,7 @@ def split_step(wf: FFTArray, *,
 # TODO: Do a proper numerical analysis.
 # Maybe use https://herbie.uwplse.org/
 # TODO Benchmark performance
-def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FreqArray:
+def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FFTArray:
     """Freely propagates the given wavefunction in time:
 
     .. math::
@@ -184,6 +182,6 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FreqAr
 
     # In 3D: kx**2+ky**2+kz**2
     k_sq = reduce(lambda a,b: a+b, [(2*np.pi*dim.freq_array())**2. for dim in wf.dims])
-    return wf.freq_array() * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
+    return wf.into(space="freq") * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
 
 

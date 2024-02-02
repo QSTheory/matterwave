@@ -10,7 +10,7 @@ from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
 
 def test_eager() -> None:
     dim_pos_x = FFTDimension("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7, default_eager=False)
-    arr = dim_pos_x.pos_array()
+    arr = dim_pos_x.fft_array(space="pos")
 
     # TODO: Needs lazy implemented to work
     # assert split_step(arr, dt=1., mass=1., V=arr)._factors_applied == (False,)
@@ -21,4 +21,4 @@ def test_eager() -> None:
 def test_psi(tlib) -> None:
     dim_pos_x = FFTDimension("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7, default_eager=False, default_tlib=tlib)
     # TODO Actually test the result and not just that it does not crash.
-    split_step(dim_pos_x.pos_array(), dt=1., mass=1., V=lambda psi: np.abs(psi)**2)
+    split_step(dim_pos_x.fft_array(space="pos"), dt=1., mass=1., V=lambda psi: np.abs(psi)**2)

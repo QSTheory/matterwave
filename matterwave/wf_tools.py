@@ -1,4 +1,4 @@
-from fftarray import FFTArray, FFTDimension, PosArray, FreqArray
+from fftarray import FFTArray, FFTDimension, Space
 # from fftarray.tools import shift_frequency
 from scipy.constants import pi, hbar, Boltzmann
 import numpy as np
@@ -23,7 +23,7 @@ def norm(wf: FFTArray) -> float:
     matterwave.wf_tools.normalize
     """
     # Apply all lazy factors now so that they are not applied twice later on.
-    wf_non_lazy = wf.evaluate_lazy_state()
+    wf_non_lazy = wf.into(factors_applied=True)
     return scalar_product(wf_non_lazy, wf_non_lazy)
 
 def normalize(wf: FFTArray) -> FFTArray:
@@ -82,7 +82,7 @@ def get_ground_state(dim: FFTDimension, *,
                     omega: Optional[float] = None,
                     sigma_p: Optional[float] = None,
                     mass: float,
-                ) -> FreqArray:
+                ) -> FFTArray:
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
@@ -133,10 +133,18 @@ def scalar_product(a: FFTArray, b: FFTArray) -> float:
     assert a.space == b.space
     bra_ket: FFTArray = np.conj(a)*b # type: ignore
     reduced = bra_ket.tlib.numpy_ufuncs.real(bra_ket.tlib.numpy_ufuncs.sum(bra_ket.values))
-    if a.space == "pos":
+
+    if _scalar_space(a) == "pos":
         return reduced * bra_ket.d_pos
     else:
         return reduced * bra_ket.d_freq
+
+def _scalar_space(wf: FFTArray) -> Space:
+    if all([dim_space == "pos" for dim_space in wf.space]):
+        return "pos"
+    elif all([dim_space == "freq" for dim_space in wf.space]):
+        return "freq"
+    raise ValueError(f"Wave function must have same space in all dimensions.")
 
 def expectation_value(wf: FFTArray, op: FFTArray) -> float:
     """
@@ -154,8 +162,10 @@ def expectation_value(wf: FFTArray, op: FFTArray) -> float:
         float
             The expectation value of the given diagonal position space operator.
     """
-    if op.space == "pos":
-        wf_in_op_space: FFTArray = wf.pos_array().evaluate_lazy_state()
+
+
+    if _scalar_space(op) == "pos":
+        wf_in_op_space: FFTArray = wf.into(space="pos", factors_applied=True)
     else:
-        wf_in_op_space = wf.freq_array().evaluate_lazy_state()
+        wf_in_op_space = wf.into(space="freq", factors_applied=True)
     return scalar_product(wf_in_op_space, op*wf_in_op_space)

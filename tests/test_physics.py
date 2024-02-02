@@ -1,11 +1,12 @@
 from jax.config import config
 config.update("jax_enable_x64", True)
 
+from jax.lax import scan
+
 from fftarray.fft_constraint_solver import fft_dim_from_constraints
-from fftarray.backends.jax_backend import JaxTensorLib, fft_array_scan
+from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
-from fftarray.backends.tensor_lib import TensorLib
 from matterwave import split_step, get_e_kin, norm
 from matterwave.wf_tools import expectation_value, get_ground_state
 
@@ -51,16 +52,22 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
         default_eager=eager,
     )
     wf = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
-            np.exp(-mass*omega_x*x_dim.pos_array()**2./(2.*hbar)+0.j) * \
-                2*np.sqrt(mass*omega_x/hbar)*x_dim.pos_array()
+            np.exp(-mass*omega_x*x_dim.fft_array(space="pos")**2./(2.*hbar)+0.j) * \
+                2*np.sqrt(mass*omega_x/hbar)*x_dim.fft_array(space="pos")
 
-    harmonic_potential_1d = 0.5 * mass * omega_x**2. * x_dim.pos_array()**2.
+    harmonic_potential_1d = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
     def split_step_scan_iteration(wf, *_):
         wf = split_step(wf, mass=mass, dt=1e-5, V=harmonic_potential_1d)
         return wf, None
 
     if backend == "jax":
-        wf, _ = fft_array_scan(f=split_step_scan_iteration, init=wf, xs=None, length=100)
+        wf, _ = scan(
+            f=split_step_scan_iteration,
+            # TODO: factors_applied will be False when lazyness is implemented
+            init=wf.into(space="freq", factors_applied=True),
+            xs=None,
+            length=100,
+        )
     else:
         for _ in range(100):
             wf, _ = split_step_scan_iteration(wf)
@@ -93,7 +100,7 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
     )
     wf = get_ground_state(x_dim, omega=omega_x_init, mass=mass)
 
-    V = 0.5 * mass * omega_x**2. * x_dim.pos_array()**2.
+    V = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
     def total_energy(wf):
         E_kin = get_e_kin(wf, m=mass, return_microK=True)
         E_pot = expectation_value(wf, V) / (Boltzmann * 1e-6)
@@ -104,7 +111,13 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         return wf, None
 
     if backend == "jax":
-        wf, _ = fft_array_scan(f=step, init=wf, xs=None, length=128)
+        wf, _ = scan(
+            f=step,
+            # TODO: factors_applied will be False when lazyness is implemented
+            init=wf.into(space="freq", factors_applied=True),
+            xs=None,
+            length=128,
+        )
     else:
         for _ in range(128):
             wf, _ = step(wf)
@@ -136,7 +149,7 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
     )
     wf = get_ground_state(x_dim, mass=mass, omega=omega_x)
     # quantum harmonic oscillator
-    V = 0.5 * mass * omega_x**2. * x_dim.pos_array()**2.
+    V = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
     # check if ground state is normalized
     np.testing.assert_array_almost_equal_nulp(float(norm(wf)), 1, 3)
     E_kin = get_e_kin(wf, m=mass, return_microK=True)

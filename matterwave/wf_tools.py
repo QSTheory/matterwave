@@ -1,4 +1,4 @@
-from fftarray import FFTArray, FFTDimension, PosArray, FreqArray
+from fftarray import FFTArray, FFTDimension, Space
 # from fftarray.tools import shift_frequency
 from scipy.constants import pi, hbar, Boltzmann
 import numpy as np
@@ -6,7 +6,7 @@ from typing import Optional, Callable, Tuple, List
 from functools import reduce
 
 def norm(wf: FFTArray) -> float:
-    """Compute the norm of the given FFTWave in position space.
+    """Compute the norm of the given FFTWave in its current space.
 
     Parameters
     ----------
@@ -22,9 +22,30 @@ def norm(wf: FFTArray) -> float:
     --------
     matterwave.wf_tools.normalize
     """
-    # Apply all lazy factors now so that they are not applied twice later on.
-    wf_non_lazy = wf.evaluate_lazy_state()
-    return scalar_product(wf_non_lazy, wf_non_lazy)
+    abs_sq: FFTArray = np.abs(wf)**2 # type: ignore
+    return integrate(abs_sq)
+
+def integrate(abs_sq: FFTArray) -> float:
+    """Integrate the given |wf|^2 in the space of wf.
+
+    Parameters
+    ----------
+    wf : FFTWave
+        The FFTWave.
+
+    Returns
+    -------
+    float
+        The integral of the given |wf|^2 in the space of wf
+
+    """
+    assert abs_sq.values.dtype == abs_sq.tlib.real_type
+    reduced = abs_sq.tlib.numpy_ufuncs.sum(abs_sq.values)
+
+    if _scalar_space(abs_sq) == "pos":
+        return reduced * abs_sq.d_pos
+    else:
+        return reduced * abs_sq.d_freq
 
 def normalize(wf: FFTArray) -> FFTArray:
     """Normalize the FFTWave.
@@ -72,7 +93,7 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
     """
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
-    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.freq_array())**2. for dim in wf.dims])
+    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(space="freq"))**2. for dim in wf.dims])
     post_factor = hbar**2/(2*m)
     if return_microK:
         post_factor /= (Boltzmann * 1e-6)
@@ -82,7 +103,7 @@ def get_ground_state(dim: FFTDimension, *,
                     omega: Optional[float] = None,
                     sigma_p: Optional[float] = None,
                     mass: float,
-                ) -> FreqArray:
+                ) -> FFTArray:
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
@@ -123,7 +144,7 @@ def get_ground_state(dim: FFTDimension, *,
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
 
-    wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (dim.pos_array()**2.)/(2.*hbar))+0.j)
+    wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (dim.fft_array(space="pos")**2.)/(2.*hbar))+0.j)
 
     wf = normalize(wf)
     return wf
@@ -133,29 +154,43 @@ def scalar_product(a: FFTArray, b: FFTArray) -> float:
     assert a.space == b.space
     bra_ket: FFTArray = np.conj(a)*b # type: ignore
     reduced = bra_ket.tlib.numpy_ufuncs.real(bra_ket.tlib.numpy_ufuncs.sum(bra_ket.values))
-    if a.space == "pos":
+
+    if _scalar_space(a) == "pos":
         return reduced * bra_ket.d_pos
     else:
         return reduced * bra_ket.d_freq
 
+def _scalar_space(wf: FFTArray) -> Space:
+    if all([dim_space == "pos" for dim_space in wf.space]):
+        return "pos"
+    elif all([dim_space == "freq" for dim_space in wf.space]):
+        return "freq"
+    raise ValueError(f"Wave function must have same space in all dimensions.")
+
 def expectation_value(wf: FFTArray, op: FFTArray) -> float:
     """
-        Compute the expectation value of the given position space kernel on the FFTWave.
+        Compute the expectation value of the given diagonal operator on the FFTWave in the space of the operator.
 
         Parameters
         ----------
         wf : FFTWave
             The FFTWave.
         op : FFTWave
-            The operator.
+            The diagonal operator.
 
         Returns
         -------
         float
-            The expectation value of the given diagonal position space operator.
+            The expectation value of the given diagonal operator.
     """
-    if op.space == "pos":
-        wf_in_op_space: FFTArray = wf.pos_array().evaluate_lazy_state()
+
+
+    if _scalar_space(op) == "pos":
+        wf_in_op_space: FFTArray = wf.into(space="pos")
     else:
-        wf_in_op_space = wf.freq_array().evaluate_lazy_state()
-    return scalar_product(wf_in_op_space, op*wf_in_op_space)
+        wf_in_op_space = wf.into(space="freq")
+
+    # We can move the operator out of the scalar product because it is diagonal.
+    # This way we can use the more efficient computation of wf_abs_sq.
+    wf_abs_sq: FFTArray = np.abs(wf_in_op_space)**2 # type: ignore
+    return integrate(wf_abs_sq*op)

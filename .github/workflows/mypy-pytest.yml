@@ -41,7 +41,7 @@ jobs:
         python -m pip install -e ".[dev]"
     - name: Test with mypy
       run: |
-        python -m mypy matterwave
+        mypy matterwave --namespace-packages=True
     - name: Test with pytest
       run: |
         python -m pytest

@@ -52,17 +52,17 @@ def generate_panel_plot(
     # Maybe because of the non-standard dims attribute?
     xr_pos = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(fftarray.pos_array())**2))
+            "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(fftarray.into(space="pos"))**2))
         },
-        coords={dim: np.array(fftarray.dims_dict[dim].pos_array()) for dim in dims}
+        coords={dim: np.array(fftarray.dims_dict[dim].fft_array(space="pos")) for dim in dims}
     )
 
     from matterwave.rb87 import hbar, k_L
     xr_freq = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(fftarray.freq_array())**2))
+            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(fftarray.into(space="freq"))**2))
         },
-        coords={kdim: np.array(fftarray.dims_dict[dim].freq_array()/k_L*2*np.pi) for dim, kdim in zip(dims,k_dims)}
+        coords={kdim: np.array(fftarray.dims_dict[dim].fft_array(space="freq")/k_L*2*np.pi) for dim, kdim in zip(dims,k_dims)}
     )
 
     if len(dims) == 1:

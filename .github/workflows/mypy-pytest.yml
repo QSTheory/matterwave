@@ -22,6 +22,12 @@ jobs:
       with:
         fetch-depth: 0
         fetch-tags: true
+    - name: Clone fftarray
+      uses: actions/checkout@v4
+      with:
+        repository: QSTheory/fftarray
+        ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        path: ../fftarray
     - name: Set up Python 3.9
       uses: actions/setup-python@v5
       with:
@@ -29,6 +35,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        cd ../fftarray
+        python -m pip install -e ".[dev]"
+        cd ../matterwave
         python -m pip install -e ".[dev]"
     - name: Test with mypy
       run: |

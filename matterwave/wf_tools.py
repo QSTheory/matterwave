@@ -140,14 +140,11 @@ def scalar_product(a: FFTArray, b: FFTArray) -> float:
         return reduced * bra_ket.d_freq
 
 def _scalar_space(wf: FFTArray) -> Space:
-    all_pos = all([dim_space == "pos" for dim_space in wf.space])
-    all_freq = all([dim_space == "freq" for dim_space in wf.space])
-    if not all_pos and not all_freq:
-        raise ValueError(f"Wave function must have same space in all dimensions.")
-    if all_pos:
+    if all([dim_space == "pos" for dim_space in wf.space]):
         return "pos"
-
-    return "freq"
+    elif all([dim_space == "freq" for dim_space in wf.space]):
+        return "freq"
+    raise ValueError(f"Wave function must have same space in all dimensions.")
 
 def expectation_value(wf: FFTArray, op: FFTArray) -> float:
     """

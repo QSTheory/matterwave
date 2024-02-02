@@ -3,11 +3,10 @@ config.update("jax_enable_x64", True)
 
 from jax.lax import scan
 
-from fftarray import FFTDimension
+from fftarray.fft_constraint_solver import fft_dim_from_constraints
 from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
-from fftarray.backends.tensor_lib import TensorLib
 from matterwave import split_step, get_e_kin, norm
 from matterwave.wf_tools import expectation_value, get_ground_state
 
@@ -44,7 +43,7 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
     mass = m_rb87
     omega_x = 2*pi
 
-    x_dim = FFTDimension("x",
+    x_dim = fft_dim_from_constraints("x",
         pos_min=-100e-6,
         pos_max=100e-6,
         freq_middle=0.,
@@ -90,7 +89,7 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
     mass = m_rb87
     omega_x_init = 2.*pi # angular freq. for initial (ground) state
     omega_x = 2.*pi*0.1 # angular freq. for desired ground state
-    x_dim = FFTDimension("x",
+    x_dim = fft_dim_from_constraints("x",
         pos_min=-200e-6,
         pos_max=200e-6,
         freq_middle=0.,
@@ -138,7 +137,7 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
 
     mass = m_rb87
     omega_x = 2*pi
-    x_dim = FFTDimension("x",
+    x_dim = fft_dim_from_constraints("x",
         pos_min=-200e-6,
         pos_max=200e-6,
         freq_middle=0.,

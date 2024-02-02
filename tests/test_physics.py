@@ -3,8 +3,8 @@ config.update("jax_enable_x64", True)
 
 from jax.lax import scan
 
-from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.fft_constraint_solver import fft_dim_from_constraints
+from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
 from matterwave import split_step, get_e_kin, norm

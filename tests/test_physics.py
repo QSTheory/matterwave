@@ -64,8 +64,7 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
     if backend == "jax":
         wf, _ = scan(
             f=split_step_scan_iteration,
-            # TODO: factors_applied will be False when lazyness is implemented
-            init=wf.into(space="freq", factors_applied=True),
+            init=wf.into(space="freq", factors_applied=eager),
             xs=None,
             length=100,
         )
@@ -114,8 +113,7 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
     if backend == "jax":
         wf, _ = scan(
             f=step,
-            # TODO: factors_applied will be False when lazyness is implemented
-            init=wf.into(space="freq", factors_applied=True),
+            init=wf.into(space="freq", factors_applied=eager),
             xs=None,
             length=128,
         )

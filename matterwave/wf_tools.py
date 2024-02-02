@@ -22,9 +22,13 @@ def norm(wf: FFTArray) -> float:
     --------
     matterwave.wf_tools.normalize
     """
-    # Apply all lazy factors now so that they are not applied twice later on.
-    wf_non_lazy = wf.into(factors_applied=True)
-    return scalar_product(wf_non_lazy, wf_non_lazy)
+    abs_sq: FFTArray = np.abs(wf)**2 # type: ignore
+    reduced = abs_sq.tlib.numpy_ufuncs.sum(abs_sq.values)
+
+    if _scalar_space(abs_sq) == "pos":
+        return reduced * abs_sq.d_pos
+    else:
+        return reduced * abs_sq.d_freq
 
 def normalize(wf: FFTArray) -> FFTArray:
     """Normalize the FFTWave.

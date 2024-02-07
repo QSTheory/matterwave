@@ -31,7 +31,7 @@ setuptools.setup(
     classifiers=[],
     python_requires=">=3.9",
     install_requires=[
-        "fftarray",
+        "fftarray[jax,helpers] @ git+ssh://git@github.com/QSTheory/fftarray.git",
         "numpy>=1.21",
         "scipy",
         "jax>=0.4.2",

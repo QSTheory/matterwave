@@ -6,7 +6,7 @@ from typing import Optional, Callable, Tuple, List
 from functools import reduce
 
 def norm(wf: FFTArray) -> float:
-    """Compute the norm of the given FFTWave in position space.
+    """Compute the norm of the given FFTWave in its current space.
 
     Parameters
     ----------
@@ -22,9 +22,30 @@ def norm(wf: FFTArray) -> float:
     --------
     matterwave.wf_tools.normalize
     """
-    # Apply all lazy factors now so that they are not applied twice later on.
-    wf_non_lazy = wf.into(factors_applied=True)
-    return scalar_product(wf_non_lazy, wf_non_lazy)
+    abs_sq: FFTArray = np.abs(wf)**2 # type: ignore
+    return integrate(abs_sq)
+
+def integrate(abs_sq: FFTArray) -> float:
+    """Integrate the given |wf|^2 in the space of wf.
+
+    Parameters
+    ----------
+    wf : FFTWave
+        The FFTWave.
+
+    Returns
+    -------
+    float
+        The integral of the given |wf|^2 in the space of wf
+
+    """
+    assert abs_sq.values.dtype == abs_sq.tlib.real_type
+    reduced = abs_sq.tlib.numpy_ufuncs.sum(abs_sq.values)
+
+    if _scalar_space(abs_sq) == "pos":
+        return reduced * abs_sq.d_pos
+    else:
+        return reduced * abs_sq.d_freq
 
 def normalize(wf: FFTArray) -> FFTArray:
     """Normalize the FFTWave.
@@ -148,24 +169,28 @@ def _scalar_space(wf: FFTArray) -> Space:
 
 def expectation_value(wf: FFTArray, op: FFTArray) -> float:
     """
-        Compute the expectation value of the given position space kernel on the FFTWave.
+        Compute the expectation value of the given diagonal operator on the FFTWave in the space of the operator.
 
         Parameters
         ----------
         wf : FFTWave
             The FFTWave.
         op : FFTWave
-            The operator.
+            The diagonal operator.
 
         Returns
         -------
         float
-            The expectation value of the given diagonal position space operator.
+            The expectation value of the given diagonal operator.
     """
 
 
     if _scalar_space(op) == "pos":
-        wf_in_op_space: FFTArray = wf.into(space="pos", factors_applied=True)
+        wf_in_op_space: FFTArray = wf.into(space="pos")
     else:
-        wf_in_op_space = wf.into(space="freq", factors_applied=True)
-    return scalar_product(wf_in_op_space, op*wf_in_op_space)
+        wf_in_op_space = wf.into(space="freq")
+
+    # We can move the operator out of the scalar product because it is diagonal.
+    # This way we can use the more efficient computation of wf_abs_sq.
+    wf_abs_sq: FFTArray = np.abs(wf_in_op_space)**2 # type: ignore
+    return integrate(wf_abs_sq*op)

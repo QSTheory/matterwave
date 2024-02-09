@@ -3,6 +3,7 @@ config.update("jax_enable_x64", True)
 
 from jax.lax import scan
 
+from fftarray import FFTArrayProps
 from fftarray.fft_constraint_solver import fft_dim_from_constraints
 from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
@@ -48,14 +49,14 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
         pos_max=100e-6,
         freq_middle=0.,
         n=1024,
-        default_tlib=tensor_lib,
-        default_eager=eager,
     )
+    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
+    x = x_dim.fft_array(props, space="pos")
     wf = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
-            np.exp(-mass*omega_x*x_dim.fft_array(space="pos")**2./(2.*hbar)+0.j) * \
-                2*np.sqrt(mass*omega_x/hbar)*x_dim.fft_array(space="pos")
+            np.exp(-mass*omega_x*x**2./(2.*hbar)+0.j) * \
+                2*np.sqrt(mass*omega_x/hbar)*x
 
-    harmonic_potential_1d = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
+    harmonic_potential_1d = 0.5 * mass * omega_x**2. * x**2.
     def split_step_scan_iteration(wf, *_):
         wf = split_step(wf, mass=mass, dt=1e-5, V=harmonic_potential_1d)
         return wf, None
@@ -95,12 +96,12 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         pos_max=200e-6,
         freq_middle=0.,
         n=2048,
-        default_tlib=tensor_lib,
-        default_eager=eager,
     )
-    wf = get_ground_state(x_dim, omega=omega_x_init, mass=mass)
+    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
+    x = x_dim.fft_array(props, space="pos")
+    wf = get_ground_state(x, omega=omega_x_init, mass=mass)
 
-    V = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
+    V = 0.5 * mass * omega_x**2. * x**2.
     def total_energy(wf):
         E_kin = get_e_kin(wf, m=mass, return_microK=True)
         E_pot = expectation_value(wf, V) / (Boltzmann * 1e-6)
@@ -144,12 +145,12 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
         pos_max=200e-6,
         freq_middle=0.,
         n=2048,
-        default_tlib=tensor_lib,
-        default_eager=eager,
     )
-    wf = get_ground_state(x_dim, mass=mass, omega=omega_x)
+    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
+    x = x_dim.fft_array(props, space="pos")
+    wf = get_ground_state(x, mass=mass, omega=omega_x)
     # quantum harmonic oscillator
-    V = 0.5 * mass * omega_x**2. * x_dim.fft_array(space="pos")**2.
+    V = 0.5 * mass * omega_x**2. * x**2.
     # check if ground state is normalized
     np.testing.assert_array_almost_equal_nulp(float(norm(wf)), 1, 3)
     E_kin = get_e_kin(wf, m=mass, return_microK=True)

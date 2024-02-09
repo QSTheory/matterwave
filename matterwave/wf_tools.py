@@ -93,17 +93,19 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
     """
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
-    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(space="freq"))**2. for dim in wf.dims])
+    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(props, space="freq"))**2. for dim, props in zip(wf.dims, wf.props)])
     post_factor = hbar**2/(2*m)
     if return_microK:
         post_factor /= (Boltzmann * 1e-6)
     return expectation_value(wf, kin_op) * post_factor
 
-def get_ground_state(dim: FFTDimension, *,
-                    omega: Optional[float] = None,
-                    sigma_p: Optional[float] = None,
-                    mass: float,
-                ) -> FFTArray:
+def get_ground_state(
+            x: FFTArray,
+            *,
+            omega: Optional[float] = None,
+            sigma_p: Optional[float] = None,
+            mass: float,
+        ) -> FFTArray:
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
@@ -144,7 +146,7 @@ def get_ground_state(dim: FFTDimension, *,
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
 
-    wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (dim.fft_array(space="pos")**2.)/(2.*hbar))+0.j)
+    wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (x**2.)/(2.*hbar))+0.j)
 
     wf = normalize(wf)
     return wf

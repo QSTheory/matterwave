@@ -36,6 +36,11 @@ setuptools.setup(
         "scipy",
         "jax>=0.4.2",
         "jaxlib",
+        "panel",
+        "holoviews",
+        "hvplot",
+        "colorcet",
+        "datashader"
     ],
     extras_require={
         "dev": [

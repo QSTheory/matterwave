@@ -54,7 +54,7 @@ def generate_panel_plot(
         data_vars={
             "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(fftarray.into(space="pos"))**2))
         },
-        coords={dim: np.array(fftarray.dims_dict[dim].fft_array(space="pos")) for dim in dims}
+        coords={dim: fftarray.dims_dict[dim].np_array(space="pos") for dim in dims}
     )
 
     from matterwave.rb87 import hbar, k_L
@@ -62,7 +62,7 @@ def generate_panel_plot(
         data_vars={
             "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(fftarray.into(space="freq"))**2))
         },
-        coords={kdim: np.array(fftarray.dims_dict[dim].fft_array(space="freq")/k_L*2*np.pi) for dim, kdim in zip(dims,k_dims)}
+        coords={kdim: fftarray.dims_dict[dim].np_array(space="freq")/k_L*2*np.pi for dim, kdim in zip(dims,k_dims)}
     )
 
     if len(dims) == 1:

@@ -3,7 +3,6 @@ config.update("jax_enable_x64", True)
 
 from jax.lax import scan
 
-from fftarray import FFTArrayProps
 from fftarray.fft_constraint_solver import fft_dim_from_constraints
 from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
@@ -50,8 +49,7 @@ def test_1d_x_split_step(backend: str, eager: bool) -> None:
         freq_middle=0.,
         n=1024,
     )
-    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
-    x = x_dim.fft_array(props, space="pos")
+    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
     wf = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
             np.exp(-mass*omega_x*x**2./(2.*hbar)+0.j) * \
                 2*np.sqrt(mass*omega_x/hbar)*x
@@ -97,8 +95,8 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         freq_middle=0.,
         n=2048,
     )
-    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
-    x = x_dim.fft_array(props, space="pos")
+
+    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
     wf = get_ground_state(x, omega=omega_x_init, mass=mass)
 
     V = 0.5 * mass * omega_x**2. * x**2.
@@ -146,8 +144,8 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
         freq_middle=0.,
         n=2048,
     )
-    props = FFTArrayProps(eager=eager, tlib=tensor_lib)
-    x = x_dim.fft_array(props, space="pos")
+
+    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
     wf = get_ground_state(x, mass=mass, omega=omega_x)
     # quantum harmonic oscillator
     V = 0.5 * mass * omega_x**2. * x**2.

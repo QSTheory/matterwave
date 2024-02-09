@@ -93,7 +93,7 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
     """
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
-    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(props, space="freq"))**2. for dim, props in zip(wf.dims, wf.props)])
+    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(tlib=wf.tlib, space="freq", eager=eager))**2. for dim, eager in zip(wf.dims, wf.eager)])
     post_factor = hbar**2/(2*m)
     if return_microK:
         post_factor /= (Boltzmann * 1e-6)

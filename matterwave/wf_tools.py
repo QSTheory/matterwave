@@ -103,7 +103,7 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
 def get_ground_state_ho(
             dim: FFTDimension,
             tlib: TensorLib,
-            eager: bool,
+            eager: bool = False,
             *,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,

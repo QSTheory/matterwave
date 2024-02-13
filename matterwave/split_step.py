@@ -181,7 +181,7 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FFTArr
     # => This formulation uses less numerical range to enable single precision floats
 
     # In 3D: kx**2+ky**2+kz**2
-    k_sq = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(space="freq"))**2. for dim in wf.dims])
+    k_sq = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(tlib=wf.tlib, space="freq", eager=eager))**2. for dim, eager in zip(wf.dims, wf.eager)])
     return wf.into(space="freq") * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
 
 

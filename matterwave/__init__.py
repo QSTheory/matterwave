@@ -34,4 +34,4 @@ Example:
 
 """
 from .split_step import split_step, propagate
-from .wf_tools import norm, normalize,  get_ground_state, get_e_kin, scalar_product, expectation_value
+from .wf_tools import norm, normalize,  get_ground_state_ho, get_e_kin, scalar_product, expectation_value

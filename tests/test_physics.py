@@ -8,7 +8,7 @@ from fftarray.backends.jax_backend import JaxTensorLib
 from fftarray.backends.np_backend import NumpyTensorLib
 from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
 from matterwave import split_step, get_e_kin, norm
-from matterwave.wf_tools import expectation_value, get_ground_state
+from matterwave.wf_tools import expectation_value, get_ground_state_ho
 
 # Math
 import numpy as np
@@ -96,9 +96,15 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
         n=2048,
     )
 
-    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
-    wf = get_ground_state(x, omega=omega_x_init, mass=mass)
+    wf = get_ground_state_ho(
+        dim=x_dim,
+        tlib=tensor_lib,
+        eager=eager,
+        omega=omega_x_init,
+        mass=mass,
+    )
 
+    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
     V = 0.5 * mass * omega_x**2. * x**2.
     def total_energy(wf):
         E_kin = get_e_kin(wf, m=mass, return_microK=True)
@@ -145,8 +151,14 @@ def test_1d_set_ground_state(backend, eager: bool) -> None:
         n=2048,
     )
 
+    wf = get_ground_state_ho(
+        dim=x_dim,
+        tlib=tensor_lib,
+        eager=eager,
+        omega=omega_x,
+        mass=mass,
+    )
     x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
-    wf = get_ground_state(x, mass=mass, omega=omega_x)
     # quantum harmonic oscillator
     V = 0.5 * mass * omega_x**2. * x**2.
     # check if ground state is normalized

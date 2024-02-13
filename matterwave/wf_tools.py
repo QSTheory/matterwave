@@ -1,4 +1,5 @@
 from fftarray import FFTArray, FFTDimension, Space
+from fftarray.backends.tensor_lib import TensorLib
 # from fftarray.tools import shift_frequency
 from scipy.constants import pi, hbar, Boltzmann
 import numpy as np
@@ -99,8 +100,10 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
         post_factor /= (Boltzmann * 1e-6)
     return expectation_value(wf, kin_op) * post_factor
 
-def get_ground_state(
-            x: FFTArray,
+def get_ground_state_ho(
+            dim: FFTDimension,
+            tlib: TensorLib,
+            eager: bool,
             *,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
@@ -145,7 +148,7 @@ def get_ground_state(
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
-
+    x = dim.fft_array(tlib, space="pos", eager=eager)
     wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (x**2.)/(2.*hbar))+0.j)
 
     wf = normalize(wf)

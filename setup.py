@@ -44,6 +44,7 @@ setuptools.setup(
     ],
     extras_require={
         "dev": [
+            "ipython",
             "mypy>=0.910",
             "pytest",
             "hypothesis",

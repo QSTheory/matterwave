@@ -40,7 +40,7 @@ def integrate(abs_sq: FFTArray) -> float:
         The integral of the given |wf|^2 in the space of wf
 
     """
-    assert abs_sq.values.dtype == abs_sq.tlib.real_type
+    assert abs_sq.tlib.numpy_ufuncs.issubdtype(abs_sq.values.dtype, abs_sq.tlib.numpy_ufuncs.floating)
     reduced = abs_sq.tlib.numpy_ufuncs.sum(abs_sq.values)
 
     if _scalar_space(abs_sq) == "pos":

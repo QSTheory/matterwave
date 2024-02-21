@@ -15,6 +15,8 @@ if version == "":
 
 assert "." in version
 
+# TODO: check if we should add jupyter_bokeh here??
+
 setuptools.setup(
     name="matterwave",
     version=version,

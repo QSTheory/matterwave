@@ -131,26 +131,11 @@ def get_ground_state_ho(
     return psi
 
 
-def scalar_product(a: fa.Array, b: fa.Array) -> float:
+def scalar_product(a: fa.Array, b: fa.Array) -> fa.Array:
     assert a.space == b.space
-    scalar_space: fa.Space = _scalar_space(a)
     bra_ket: fa.Array = fa.conj(a)*b # type: ignore
-    reduced = fa.real(fa.sum(bra_ket)).values(scalar_space)
+    return fa.real(fa.integrate(bra_ket))
 
-    match scalar_space:
-        case "pos":
-            return reduced * bra_ket.d_pos
-        case "freq":
-            return reduced * bra_ket.d_freq
-        case _:
-            raise ValueError(f"Space {scalar_space} not supported.")
-
-def _scalar_space(wf: fa.Array) -> fa.Space:
-    if all([dim_space == "pos" for dim_space in wf.space]):
-        return "pos"
-    elif all([dim_space == "freq" for dim_space in wf.space]):
-        return "freq"
-    raise ValueError(f"Wave function must have same space in all dimensions.")
 
 def expectation_value(psi: fa.Array, op: fa.Array) -> fa.Array:
     """
@@ -168,8 +153,7 @@ def expectation_value(psi: fa.Array, op: fa.Array) -> fa.Array:
         float
             The expectation value of the given diagonal operator.
     """
-    op_space: fa.Space = _scalar_space(op)
-    psi_in_op_space = psi.into_space(op_space)
+    psi_in_op_space = psi.into_space(op.space)
     # We can move the operator out of the scalar product because it is diagonal.
     # This way we can use the more efficient computation of psi_abs_sq.
     psi_abs_sq: fa.Array = fa.abs(psi_in_op_space)**2 # type: ignore

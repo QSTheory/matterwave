@@ -42,7 +42,7 @@ def generate_panel_plot(
     # Create pandas dataframe to plot FFTWave infos in a table
     df_dict = {"dim": [dim for dim in array.dims_dict.keys()]}
     for info in ["n", "d_pos", "d_freq", "pos_min", "pos_max", "freq_min", "freq_max"]:
-        df_dict[info] = [float(getattr(array.dims_dict[dim], info)) for dim in df_dict["dim"]]
+        df_dict[info] = [float(getattr(array.dims_dict[dim], info)) for dim in df_dict["dim"]] # type: ignore
     value_specs = pd.DataFrame(df_dict)
 
     dims = [str(dim) for dim in df_dict["dim"]]

@@ -1,83 +1,60 @@
-from fftarray import FFTArray, FFTDimension, Space
-from fftarray.backends.tensor_lib import TensorLib
-# from fftarray.tools import shift_frequency
+import fftarray as fa
 from scipy.constants import pi, hbar, Boltzmann
 import numpy as np
-from typing import Optional, Callable, Tuple, List
+from typing import Optional, Any
 from functools import reduce
 
-def norm(wf: FFTArray) -> float:
-    """Compute the norm of the given FFTWave in its current space.
+def norm(psi: fa.Array) -> fa.Array:
+    """Compute the norm of the given Array in its current space.
 
     Parameters
     ----------
-    wf : FFTWave
-        The FFTWave.
+    psi : Array
+        The wave function.
 
     Returns
     -------
     float
-        The norm in position space.
+        The norm of the Array.
 
     See Also
     --------
     matterwave.wf_tools.normalize
     """
-    abs_sq: FFTArray = np.abs(wf)**2 # type: ignore
-    return integrate(abs_sq)
+    abs_sq: fa.Array = fa.abs(psi)**2 # type: ignore
+    arr_norm: fa.Array = fa.integrate(abs_sq)
+    return arr_norm#.values(arr_norm.space)
 
-def integrate(abs_sq: FFTArray) -> float:
-    """Integrate the given |wf|^2 in the space of wf.
-
-    Parameters
-    ----------
-    wf : FFTWave
-        The FFTWave.
-
-    Returns
-    -------
-    float
-        The integral of the given |wf|^2 in the space of wf
-
-    """
-    assert abs_sq.tlib.numpy_ufuncs.issubdtype(abs_sq.values.dtype, abs_sq.tlib.numpy_ufuncs.floating)
-    reduced = abs_sq.tlib.numpy_ufuncs.sum(abs_sq.values)
-
-    if _scalar_space(abs_sq) == "pos":
-        return reduced * abs_sq.d_pos
-    else:
-        return reduced * abs_sq.d_freq
-
-def normalize(wf: FFTArray) -> FFTArray:
-    """Normalize the FFTWave.
+def normalize(psi: fa.Array) -> fa.Array:
+    """Normalize the wave function.
 
     Parameters
     ----------
-    wf : FFTWave
-        The initial FFTWave.
+    psi : Array
+        The initial wave function.
 
     Returns
     -------
-    FFTWave
-        The normalized FFTWave.
+    Array
+        The normalized wave function.
 
     See Also
     --------
     matterwave.wf_tools.norm_pos_space
     matterwave.wf_tools.norm_freq_space
     """
-    norm_factor = wf.tlib.numpy_ufuncs.sqrt(1./norm(wf))
-    return wf * norm_factor
+    norm_factor = fa.sqrt(1./norm(psi))
+    return psi * norm_factor
 
-def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
+def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
     """Compute the kinetic energy of the given FFTWave with the given mass.
 
     Parameters
     ----------
-    wf : FFTWave
-        The FFTWave.
+    psi : Array
+        The wave function.
     m : float
-        The mass of the FFTWave.
+        The mass of the wave function.
     return_microK : bool, optional
         Return the kinetic energy in microK instead of Joule.
         This option exists since returning it in Joule does not work in single
@@ -90,25 +67,25 @@ def get_e_kin(wf: FFTArray, m: float, return_microK: bool = False) -> float:
 
     See Also
     --------
-    fftarray.fft_wave.FFTWave.expectation_value_freq
+    matterwave.expectation_value_freq
     """
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
-    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(tlib=wf.tlib, space="freq", eager=eager))**2. for dim, eager in zip(wf.dims, wf.eager)])
+    kin_op = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
     post_factor = hbar**2/(2*m)
     if return_microK:
         post_factor /= (Boltzmann * 1e-6)
-    return expectation_value(wf, kin_op) * post_factor
+    return expectation_value(psi, kin_op) * post_factor
 
 def get_ground_state_ho(
-            dim: FFTDimension,
-            tlib: TensorLib,
-            eager: bool = False,
+            dim: fa.Dimension,
             *,
+            xp: Optional[Any] = None,
+            dtype: Optional[Any] = None,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
             mass: float,
-        ) -> FFTArray:
+        ) -> fa.Array:
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
@@ -141,38 +118,41 @@ def get_ground_state_ho(
 
     See Also
     --------
-    fftarray.fft_wave.FFTWave.map_pos_space
+    fftarray.coords_from_dim
     """
     if omega and sigma_p:
         raise ValueError("You can only specify ground state width either as omega or sigma_p, not both.")
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
-    x = dim.fft_array(tlib, space="pos", eager=eager)
-    wf = (mass * omega / (pi*hbar))**(1./4.) * np.exp(-(mass * omega * (x**2.)/(2.*hbar))+0.j)
+    x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype)
+    psi: fa.Array = (mass * omega / (pi*hbar))**(1./4.) * fa.exp(-(mass * omega * (x**2.)/(2.*hbar)))
+    psi = normalize(psi)
+    return psi
 
-    wf = normalize(wf)
-    return wf
 
-
-def scalar_product(a: FFTArray, b: FFTArray) -> float:
+def scalar_product(a: fa.Array, b: fa.Array) -> float:
     assert a.space == b.space
-    bra_ket: FFTArray = np.conj(a)*b # type: ignore
-    reduced = bra_ket.tlib.numpy_ufuncs.real(bra_ket.tlib.numpy_ufuncs.sum(bra_ket.values))
+    scalar_space: fa.Space = _scalar_space(a)
+    bra_ket: fa.Array = fa.conj(a)*b # type: ignore
+    reduced = fa.real(fa.sum(bra_ket)).values(scalar_space)
 
-    if _scalar_space(a) == "pos":
-        return reduced * bra_ket.d_pos
-    else:
-        return reduced * bra_ket.d_freq
+    match scalar_space:
+        case "pos":
+            return reduced * bra_ket.d_pos
+        case "freq":
+            return reduced * bra_ket.d_freq
+        case _:
+            raise ValueError(f"Space {scalar_space} not supported.")
 
-def _scalar_space(wf: FFTArray) -> Space:
+def _scalar_space(wf: fa.Array) -> fa.Space:
     if all([dim_space == "pos" for dim_space in wf.space]):
         return "pos"
     elif all([dim_space == "freq" for dim_space in wf.space]):
         return "freq"
     raise ValueError(f"Wave function must have same space in all dimensions.")
 
-def expectation_value(wf: FFTArray, op: FFTArray) -> float:
+def expectation_value(psi: fa.Array, op: fa.Array) -> fa.Array:
     """
         Compute the expectation value of the given diagonal operator on the FFTWave in the space of the operator.
 
@@ -188,14 +168,11 @@ def expectation_value(wf: FFTArray, op: FFTArray) -> float:
         float
             The expectation value of the given diagonal operator.
     """
-
-
-    if _scalar_space(op) == "pos":
-        wf_in_op_space: FFTArray = wf.into(space="pos")
-    else:
-        wf_in_op_space = wf.into(space="freq")
-
+    op_space: fa.Space = _scalar_space(op)
+    psi_in_op_space = psi.into_space(op_space)
     # We can move the operator out of the scalar product because it is diagonal.
-    # This way we can use the more efficient computation of wf_abs_sq.
-    wf_abs_sq: FFTArray = np.abs(wf_in_op_space)**2 # type: ignore
-    return integrate(wf_abs_sq*op)
+    # This way we can use the more efficient computation of psi_abs_sq.
+    psi_abs_sq: fa.Array = fa.abs(psi_in_op_space)**2 # type: ignore
+    # print("psi_abs_sq.xp: ",psi_abs_sq.xp)
+    # print("op.xp: ", op.xp)
+    return fa.integrate(psi_abs_sq*op)#.values(op_space)

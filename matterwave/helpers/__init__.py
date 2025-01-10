@@ -1,2 +1,2 @@
 
-from .fftarray_plotting import plot_fftarray, generate_panel_plot
+from .fftarray_plotting import plot_array, generate_panel_plot

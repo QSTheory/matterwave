@@ -1,24 +1,25 @@
 import numpy as np
-
+from typing import Any
 import pytest
 
-from fftarray.fft_array import FFTDimension
+import fftarray as fa
 from matterwave.split_step import split_step
-from fftarray.backends.jax_backend import JaxTensorLib
-from fftarray.backends.np_backend import NumpyTensorLib
-from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
+from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
 
 def test_eager() -> None:
-    dim_pos_x = FFTDimension("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
-    arr = dim_pos_x.fft_array(tlib=NumpyTensorLib(), space="pos", eager=False)
+    dim = fa.dim("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
+    arr = fa.coords_from_dim(dim, "pos")
 
     # TODO: Needs lazy implemented to work
     # assert split_step(arr, dt=1., mass=1., V=arr)._factors_applied == (False,)
-    arr = arr.into(eager=True)
-    assert split_step(arr.into(factors_applied=True), dt=1., mass=1., V=arr.into(factors_applied=True))._factors_applied == (True,)
+    psi = arr.into_eager(True)
+    V = arr.into_eager(True)
+    assert split_step(psi, dt=1., mass=1., V=V)._factors_applied == (True,)
 
-@pytest.mark.parametrize("tlib", [NumpyTensorLib(), JaxTensorLib(), PyFFTWTensorLib()])
-def test_psi(tlib) -> None:
-    dim_pos_x = FFTDimension("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
+@pytest.mark.parametrize("xp", XPS)
+@pytest.mark.parametrize("precision", precisions)
+def test_psi(xp: Any, precision: PrecisionSpec) -> None:
+    dim = fa.dim("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
+    arr = fa.coords_from_dim(dim, "pos", xp=xp, dtype=getattr(xp, precision)).into_eager(False)
     # TODO Actually test the result and not just that it does not crash.
-    split_step(dim_pos_x.fft_array(tlib=tlib, space="pos", eager=False), dt=1., mass=1., V=lambda psi: np.abs(psi)**2)
+    split_step(arr, dt=1., mass=1., V=lambda psi: np.abs(psi)**2)

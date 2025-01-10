@@ -130,3 +130,7 @@ dmypy.json
 
 # macOS attributes
 .DS_Store
+
+# pixi environments
+.pixi
+*.egg-info

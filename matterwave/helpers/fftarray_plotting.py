@@ -16,7 +16,7 @@ from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
 silence(FIXED_SIZING_MODE, True)
 
-from fftarray import FFTArray, FFTDimension
+import fftarray as fa
 
 import numpy as np
 
@@ -24,25 +24,25 @@ COLORS = ['#5BFF00', '#6400E6', '#FF0000'] # green, purple, red
 CONTOUR_MAP = cc.CET_CBD2[::-1]
 
 
-def plot_fftarray(
-    fftarray: FFTArray,
+def plot_array(
+    array: fa.Array,
 ) -> None:
 
-    plot = generate_panel_plot(fftarray)
+    plot = generate_panel_plot(array)
 
     plot.servable()
 
 def generate_panel_plot(
-    fftarray: FFTArray,
+    array: fa.Array,
 ) -> pn.Column:
 
-    if len(fftarray.dims) == 0:
+    if len(array.dims) == 0:
         return pn.Column()
 
     # Create pandas dataframe to plot FFTWave infos in a table
-    df_dict = {"dim": [dim for dim in fftarray.dims_dict.keys()]}
+    df_dict = {"dim": [dim for dim in array.dims_dict.keys()]}
     for info in ["n", "d_pos", "d_freq", "pos_min", "pos_max", "freq_min", "freq_max"]:
-        df_dict[info] = [float(getattr(fftarray.dims_dict[dim], info)) for dim in df_dict["dim"]]
+        df_dict[info] = [float(getattr(array.dims_dict[dim], info)) for dim in df_dict["dim"]]
     value_specs = pd.DataFrame(df_dict)
 
     dims = [str(dim) for dim in df_dict["dim"]]
@@ -52,17 +52,17 @@ def generate_panel_plot(
     # Maybe because of the non-standard dims attribute?
     xr_pos = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(fftarray.into(space="pos"))**2))
+            "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(array.values("pos"))**2))
         },
-        coords={dim: fftarray.dims_dict[dim].np_array(space="pos") for dim in dims}
+        coords={dim: array.dims_dict[dim].np_array(space="pos") for dim in dims}
     )
 
-    from matterwave.rb87 import hbar, k_L
+    from matterwave.rb87 import k_L
     xr_freq = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(fftarray.into(space="freq"))**2))
+            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(array.values("freq"))**2))
         },
-        coords={kdim: fftarray.dims_dict[dim].np_array(space="freq")/k_L*2*np.pi for dim, kdim in zip(dims,k_dims)}
+        coords={kdim: array.dims_dict[dim].np_array(space="freq")/k_L*2*np.pi for dim, kdim in zip(dims,k_dims)}
     )
 
     if len(dims) == 1:
@@ -85,17 +85,17 @@ def generate_panel_plot(
             title = "Frequency space" if in_frequency_space else "Position space"
             name = "|Psi({0})|^2".format(",".join(k_dims)) if in_frequency_space else "|Psi({0})|^2".format(",".join(dims))
 
-            def get_fftarray_dim(
-                    fftarray: FFTArray,
-                    dim: str
-                ) -> FFTDimension:
-                dim_name = dim.replace("k", "")
-                return fftarray.dims_dict[dim_name]
+            def get_array_dim(
+                    array: fa.Array,
+                    dim_name: str
+                ) -> fa.Dimension:
+                dim_name = dim_name.replace("k", "")
+                return array.dims_dict[dim_name]
 
             # Stream that enables choosing points by clicking within the contour plot
             pointer_stream = streams.SingleTap(
-                x=getattr(get_fftarray_dim(fftarray, dims[1]), center_attribute_name),
-                y=getattr(get_fftarray_dim(fftarray, dims[0]), center_attribute_name),
+                x=getattr(get_array_dim(array, dims[1]), center_attribute_name),
+                y=getattr(get_array_dim(array, dims[0]), center_attribute_name),
             )
 
             # Creates a contour plot and 2 and 3 line plots for the 2d and 3d case, respectively
@@ -177,7 +177,7 @@ def generate_panel_plot(
                 return pn.widgets.DiscreteSlider(
                     name=f'{free_dim} value',
                     options=list(data_array.coords[free_dim].values),
-                    value = float(getattr(get_fftarray_dim(fftarray, free_dim), center_attribute_name))
+                    value = float(getattr(get_array_dim(array, free_dim), center_attribute_name))
                 )
             val_widget = make_val_widget(dim_widget.value)
 
@@ -197,8 +197,8 @@ def generate_panel_plot(
             def update_dim(event):
                 contour_dims = dims.copy()
                 contour_dims.remove(dim_widget.value)
-                pointer_stream.update(x=float(getattr(get_fftarray_dim(fftarray, contour_dims[1]), center_attribute_name)))
-                pointer_stream.update(y=float(getattr(get_fftarray_dim(fftarray, contour_dims[0]), center_attribute_name)))
+                pointer_stream.update(x=float(getattr(get_array_dim(array, contour_dims[1]), center_attribute_name)))
+                pointer_stream.update(y=float(getattr(get_array_dim(array, contour_dims[0]), center_attribute_name)))
 
                 nonlocal val_widget
                 val_widget = make_val_widget(dim_widget.value)

@@ -1,133 +1,139 @@
-from jax.config import config
-config.update("jax_enable_x64", True)
-
-from jax.lax import scan
-
-from fftarray.fft_constraint_solver import fft_dim_from_constraints
-from fftarray.backends.jax_backend import JaxTensorLib
-from fftarray.backends.np_backend import NumpyTensorLib
-from fftarray.backends.pyfftw_backend import PyFFTWTensorLib
-from matterwave import split_step, get_e_kin, norm
-from matterwave.wf_tools import expectation_value, get_ground_state_ho
-
-# Math
-import numpy as np
-
-# Constants
-from scipy.constants import hbar, pi, Boltzmann
+import fftarray as fa
+from matterwave.split_step import split_step
+from matterwave.wf_tools import expectation_value, get_ground_state_ho, get_e_kin, norm
 from matterwave.rb87 import m as m_rb87
 
-# Testing
+import numpy as np
+from scipy.constants import hbar, pi, Boltzmann
 import pytest
+from typing import Any
+
+from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
 
 # Check whether a 1d FFTWave initialization in x with mapping
 # the 1d first excited state of the harmonic oscillator correctly
 # implements the split_step method by looking at the wavefunction's
 # total energy after a few steps
 
-backends = ["numpy", "jax", "pyfftw"]
-
-def get_tensor_lib(backend: str):
-    if backend == "numpy":
-        return NumpyTensorLib(precision="fp64")
-    elif backend == "jax":
-        return JaxTensorLib(precision="fp64")
-    elif backend == "pyfftw":
-        return PyFFTWTensorLib(precision="fp64")
-
-@pytest.mark.parametrize("backend", backends)
+@pytest.mark.parametrize("xp", XPS)
+@pytest.mark.parametrize("precision", precisions)
 @pytest.mark.parametrize("eager", [False, True])
-def test_1d_x_split_step(backend: str, eager: bool) -> None:
-    tensor_lib = get_tensor_lib(backend)
+def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None:
 
     mass = m_rb87
     omega_x = 2*pi
 
-    x_dim = fft_dim_from_constraints("x",
+    x_dim = fa.dim_from_constraints("x",
         pos_min=-100e-6,
         pos_max=100e-6,
         freq_middle=0.,
         n=1024,
+        dynamically_traced_coords=False
     )
-    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
-    wf = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
-            np.exp(-mass*omega_x*x**2./(2.*hbar)+0.j) * \
+    x = fa.coords_from_dim(x_dim, "pos", xp=xp, dtype=getattr(xp, precision)).into_eager(eager)
+    psi = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
+            fa.exp(-mass*omega_x*x**2./(2.*hbar)) * \
                 2*np.sqrt(mass*omega_x/hbar)*x
 
     harmonic_potential_1d = 0.5 * mass * omega_x**2. * x**2.
-    def split_step_scan_iteration(wf, *_):
-        wf = split_step(wf, mass=mass, dt=1e-5, V=harmonic_potential_1d)
-        return wf, None
 
-    if backend == "jax":
-        wf, _ = scan(
-            f=split_step_scan_iteration,
-            init=wf.into(space="freq", factors_applied=eager),
-            xs=None,
-            length=100,
-        )
-    else:
+    def split_step_scan_iteration(psi, *_):
+        psi = split_step(psi, mass=mass, dt=1e-5, V=harmonic_potential_1d)
+        return psi, None
+
+    def nojax_scan(psi: fa.Array):
         for _ in range(100):
-            wf, _ = split_step_scan_iteration(wf)
+            psi, _ = split_step_scan_iteration(psi)
+        return psi, None
 
-    e_pot = expectation_value(wf, harmonic_potential_1d)
-    e_kin = get_e_kin(wf, m=mass)
+    try:
+        import jax.numpy as jnp
+        if psi.xp==jnp:
+            from jax.lax import scan
+            psi, _ = scan(
+                f=split_step_scan_iteration,
+                init=psi.into_space("freq").into_factors_applied(eager),
+                xs=None,
+                length=100,
+            )
+        else:
+            # jax is imported but not selected
+            psi, _ = nojax_scan(psi)
+    except ImportError:
+        # jax not imported
+        psi, _ = nojax_scan(psi)
 
-    assert e_pot + e_kin == pytest.approx(hbar*omega_x*3./2.)
+    e_pot = expectation_value(psi, harmonic_potential_1d)
+    e_kin = get_e_kin(psi, m=mass)
+
+    assert (e_pot + e_kin).values("pos") == pytest.approx(hbar*omega_x*3./2.)
+
 
 # # Test the split step method for imaginary time steps. Start with a ground state
 # # of different angular frequency than the system and evolve it towards the
 # # system's ground state. The resulting total energy should be lower than the
 # # initial one. Additionally, it is checked whether the resulting wavefunction is
 # # normalized.
-@pytest.mark.parametrize("backend", backends)
+@pytest.mark.parametrize("xp", XPS)
+@pytest.mark.parametrize("precision", precisions)
 @pytest.mark.parametrize("eager", [False, True])
-def test_1d_split_step_complex(backend: str, eager: bool) -> None:
-    tensor_lib = get_tensor_lib(backend)
+def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -> None:
 
     mass = m_rb87
     omega_x_init = 2.*pi # angular freq. for initial (ground) state
     omega_x = 2.*pi*0.1 # angular freq. for desired ground state
-    x_dim = fft_dim_from_constraints("x",
+    x_dim = fa.dim_from_constraints("x",
         pos_min=-200e-6,
         pos_max=200e-6,
         freq_middle=0.,
         n=2048,
+        dynamically_traced_coords=False
     )
 
-    wf = get_ground_state_ho(
+    psi = get_ground_state_ho(
         dim=x_dim,
-        tlib=tensor_lib,
-        eager=eager,
+        xp=xp,
+        dtype=getattr(xp, precision),
         omega=omega_x_init,
         mass=mass,
-    )
+    ).into_eager(eager)
+    x = fa.coords_from_arr(psi, x_dim.name, "pos")
 
-    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
     V = 0.5 * mass * omega_x**2. * x**2.
-    def total_energy(wf):
-        E_kin = get_e_kin(wf, m=mass, return_microK=True)
-        E_pot = expectation_value(wf, V) / (Boltzmann * 1e-6)
+    def total_energy(psi: fa.Array) -> float:
+        E_kin = get_e_kin(psi, m=mass, return_microK=True).values("pos")
+        E_pot = expectation_value(psi, V).values("pos") / (Boltzmann * 1e-6)
         return E_kin + E_pot
-    energy_before = total_energy(wf)
-    def step(wf, *_):
-        wf = split_step(wf, dt=1e-4, mass=mass, V=V, is_complex=True)
-        return wf, None
 
-    if backend == "jax":
-        wf, _ = scan(
-            f=step,
-            init=wf.into(space="freq", factors_applied=eager),
-            xs=None,
-            length=128,
-        )
-    else:
+    energy_before = total_energy(psi)
+
+    def step(psi: fa.Array, *_):
+        psi = split_step(psi, dt=1e-4, mass=mass, V=V, is_complex=True)
+        return psi, None
+
+    def nojax_scan(psi: fa.Array) -> fa.Array:
         for _ in range(128):
-            wf, _ = step(wf)
+            psi, _ = step(psi)
+        return psi, None
 
-    energy_after = total_energy(wf)
+    try:
+        import jax.numpy as jnp
+        if psi.xp==jnp:
+            from jax.lax import scan
+            psi, _ = scan(
+                f=step,
+                init=psi.into_space("freq").into_factors_applied(eager),
+                xs=None,
+                length=128,
+            )
+        else:
+            psi, _ = nojax_scan(psi)
+    except ImportError:
+        psi, _ = nojax_scan(psi)
+
+    energy_after = total_energy(psi)
     # check whether wafefunction is normalized
-    np.testing.assert_array_almost_equal_nulp(float(norm(wf)), 1., 4)
+    np.testing.assert_array_almost_equal(float(norm(psi).values("pos")), 1.)
     # check if energy is reduced (iteration towards ground state successfull)
     assert energy_after < energy_before
 
@@ -135,35 +141,37 @@ def test_1d_split_step_complex(backend: str, eager: bool) -> None:
 # # frequency 2*pi. Then, the total energy of the returned state is computed to
 # # compare it to the analytical solution. Also it is checked whether the returned
 # # wavefunction is normalized.
-@pytest.mark.parametrize("backend", backends)
+@pytest.mark.parametrize("xp", XPS)
+@pytest.mark.parametrize("precision", precisions)
 @pytest.mark.parametrize("eager", [False, True])
-def test_1d_set_ground_state(backend, eager: bool) -> None:
-    tensor_lib = get_tensor_lib(backend)
+def test_1d_set_ground_state(xp: Any, precision: PrecisionSpec, eager: bool) -> None:
 
     mass = m_rb87
     omega_x = 2*pi
-    x_dim = fft_dim_from_constraints("x",
+    x_dim = fa.dim_from_constraints("x",
         pos_min=-200e-6,
         pos_max=200e-6,
         freq_middle=0.,
         n=2048,
+        dynamically_traced_coords=False
     )
 
-    wf = get_ground_state_ho(
+    psi = get_ground_state_ho(
         dim=x_dim,
-        tlib=tensor_lib,
-        eager=eager,
+        xp=xp,
+        dtype=getattr(xp, precision),
         omega=omega_x,
         mass=mass,
-    )
-    x = x_dim.fft_array(tlib=tensor_lib, space="pos", eager=eager)
+    ).into_eager(eager)
+    x = fa.coords_from_arr(psi, x_dim.name, "pos")
+
     # quantum harmonic oscillator
     V = 0.5 * mass * omega_x**2. * x**2.
     # check if ground state is normalized
-    np.testing.assert_array_almost_equal_nulp(float(norm(wf)), 1, 3)
-    E_kin = get_e_kin(wf, m=mass, return_microK=True)
-    E_pot = expectation_value(wf, V) / (Boltzmann * 1e-6)
-    E_tot = E_kin + E_pot
+    np.testing.assert_array_almost_equal(float(norm(psi).values("pos")), 1)
+    E_kin = get_e_kin(psi, m=mass, return_microK=True)
+    E_pot = expectation_value(psi, V) / (Boltzmann * 1e-6)
+    E_tot = (E_kin + E_pot).values("pos")
     E_tot_analytical = 0.5*omega_x*hbar / (Boltzmann * 1e-6)
     # check if its energy is equal to the analytical solution
-    np.testing.assert_array_almost_equal_nulp(float(E_tot), float(E_tot_analytical), 13)
+    np.testing.assert_array_almost_equal(float(E_tot), float(E_tot_analytical))

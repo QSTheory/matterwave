@@ -132,7 +132,7 @@ def get_ground_state_ho(
 
 
 def scalar_product(a: fa.Array, b: fa.Array) -> fa.Array:
-    assert a.space == b.space
+    assert a.spaces == b.spaces
     bra_ket: fa.Array = fa.conj(a)*b # type: ignore
     return fa.real(fa.integrate(bra_ket))
 
@@ -153,7 +153,7 @@ def expectation_value(psi: fa.Array, op: fa.Array) -> fa.Array:
         float
             The expectation value of the given diagonal operator.
     """
-    psi_in_op_space = psi.into_space(op.space)
+    psi_in_op_space = psi.into_space(op.spaces)
     # We can move the operator out of the scalar product because it is diagonal.
     # This way we can use the more efficient computation of psi_abs_sq.
     psi_abs_sq: fa.Array = fa.abs(psi_in_op_space)**2 # type: ignore

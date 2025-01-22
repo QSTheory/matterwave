@@ -2,13 +2,13 @@ import fftarray as fa
 from matterwave.split_step import split_step
 from matterwave.wf_tools import expectation_value, get_ground_state_ho, get_e_kin, norm
 from matterwave.rb87 import m as m_rb87
+from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
 
 import numpy as np
 from scipy.constants import hbar, pi, Boltzmann
 import pytest
 from typing import Any
-
-from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
+from array_api_compat import is_jax_array
 
 # Check whether a 1d FFTWave initialization in x with mapping
 # the 1d first excited state of the harmonic oscillator correctly
@@ -46,21 +46,15 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
             psi, _ = split_step_scan_iteration(psi)
         return psi, None
 
-    try:
-        import jax.numpy as jnp
-        if psi.xp==jnp:
-            from jax.lax import scan
-            psi, _ = scan(
-                f=split_step_scan_iteration,
-                init=psi.into_space("freq").into_factors_applied(eager),
-                xs=None,
-                length=100,
-            )
-        else:
-            # jax is imported but not selected
-            psi, _ = nojax_scan(psi)
-    except ImportError:
-        # jax not imported
+    if is_jax_array(psi._values):
+        from jax.lax import scan
+        psi, _ = scan(
+            f=split_step_scan_iteration,
+            init=psi.into_space("freq").into_factors_applied(eager),
+            xs=None,
+            length=100,
+        )
+    else:
         psi, _ = nojax_scan(psi)
 
     e_pot = expectation_value(psi, harmonic_potential_1d)
@@ -116,19 +110,15 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
             psi, _ = step(psi)
         return psi, None
 
-    try:
-        import jax.numpy as jnp
-        if psi.xp==jnp:
-            from jax.lax import scan
-            psi, _ = scan(
-                f=step,
-                init=psi.into_space("freq").into_factors_applied(eager),
-                xs=None,
-                length=128,
-            )
-        else:
-            psi, _ = nojax_scan(psi)
-    except ImportError:
+    if is_jax_array(psi._values):
+        from jax.lax import scan
+        psi, _ = scan(
+            f=step,
+            init=psi.into_space("freq").into_factors_applied(eager),
+            xs=None,
+            length=128,
+        )
+    else:
         psi, _ = nojax_scan(psi)
 
     energy_after = total_energy(psi)

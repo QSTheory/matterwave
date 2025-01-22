@@ -46,7 +46,8 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
     "holoviews",
     "hvplot",
     "colorcet",
-    "datashader"
+    "datashader",
+    "pyarrow",
 ]
 
 "dev" = [
@@ -56,11 +57,7 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "check" = [
     "fftarray[check]",
-    "panel",
-    "holoviews",
-    "hvplot",
-    "colorcet",
-    "datashader"
+    "matterwave[dashboards]",
 ]
 
 "doc" = [

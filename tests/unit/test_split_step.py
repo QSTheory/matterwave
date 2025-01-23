@@ -3,8 +3,8 @@ from typing import Any
 import pytest
 
 import fftarray as fa
-from matterwave.split_step import split_step
-from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
+from matterwave import split_step
+from tests.helpers import XPS, PrecisionSpec, precisions
 
 def test_eager() -> None:
     dim = fa.dim("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)

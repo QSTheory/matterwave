@@ -4,7 +4,7 @@ import numpy as np
 from typing import Optional, Any
 from functools import reduce
 
-def norm(psi: fa.Array) -> fa.Array:
+def norm(psi: fa.Array) -> float:
     """Compute the norm of the given Array in its current space.
 
     Parameters
@@ -23,7 +23,7 @@ def norm(psi: fa.Array) -> fa.Array:
     """
     abs_sq: fa.Array = fa.abs(psi)**2 # type: ignore
     arr_norm: fa.Array = fa.integrate(abs_sq)
-    return arr_norm#.values(arr_norm.space)
+    return arr_norm.values(())
 
 def normalize(psi: fa.Array) -> fa.Array:
     """Normalize the wave function.
@@ -40,10 +40,9 @@ def normalize(psi: fa.Array) -> fa.Array:
 
     See Also
     --------
-    matterwave.wf_tools.norm_pos_space
-    matterwave.wf_tools.norm_freq_space
+    matterwave.wf_tools.norm
     """
-    norm_factor = fa.sqrt(1./norm(psi))
+    norm_factor = psi.xp.sqrt(1./norm(psi))
     return psi * norm_factor
 
 def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
@@ -62,12 +61,12 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
 
     Returns
     -------
-    float
+    Array
         The kinetic energy.
 
     See Also
     --------
-    matterwave.expectation_value_freq
+    matterwave.expectation_value
     """
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
@@ -131,32 +130,44 @@ def get_ground_state_ho(
     return psi
 
 
-def scalar_product(a: fa.Array, b: fa.Array) -> fa.Array:
+def scalar_product(a: fa.Array, b: fa.Array) -> float:
+    """Take the scalar product between two wave functions.
+
+    Parameters
+    ----------
+    a : fa.Array
+        Wavefunction <pos|a>
+    b : fa.Array
+        Wavefunction <pos|b>
+
+    Returns
+    -------
+    float
+        Scalar product.
+    """
     assert a.spaces == b.spaces
     bra_ket: fa.Array = fa.conj(a)*b # type: ignore
-    return fa.real(fa.integrate(bra_ket))
+    return fa.real(fa.integrate(bra_ket)).values(())
 
 
-def expectation_value(psi: fa.Array, op: fa.Array) -> fa.Array:
-    """
-        Compute the expectation value of the given diagonal operator on the FFTWave in the space of the operator.
+def expectation_value(psi: fa.Array, op: fa.Array) -> float:
+    """Compute the expectation value of the given diagonal operator on the
+    fa.Array in the space of the operator.
 
-        Parameters
-        ----------
-        wf : FFTWave
-            The FFTWave.
-        op : FFTWave
-            The diagonal operator.
+    Parameters
+    ----------
+    wf : fa.Array
+        The wave function.
+    op : fa.Array
+        The diagonal operator.
 
-        Returns
-        -------
-        float
-            The expectation value of the given diagonal operator.
+    Returns
+    -------
+    float
+        The expectation value of the given diagonal operator.
     """
     psi_in_op_space = psi.into_space(op.spaces)
     # We can move the operator out of the scalar product because it is diagonal.
     # This way we can use the more efficient computation of psi_abs_sq.
     psi_abs_sq: fa.Array = fa.abs(psi_in_op_space)**2 # type: ignore
-    # print("psi_abs_sq.xp: ",psi_abs_sq.xp)
-    # print("op.xp: ", op.xp)
-    return fa.integrate(psi_abs_sq*op)#.values(op_space)
+    return fa.integrate(psi_abs_sq*op).values(())

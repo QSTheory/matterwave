@@ -16,9 +16,10 @@ from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
 silence(FIXED_SIZING_MODE, True)
 
-import fftarray as fa
-
 import numpy as np
+import fftarray as fa
+from .constants import AtomicSpecies, Rubidium87
+
 
 COLORS = ['#5BFF00', '#6400E6', '#FF0000'] # green, purple, red
 CONTOUR_MAP = cc.CET_CBD2[::-1]
@@ -26,14 +27,16 @@ CONTOUR_MAP = cc.CET_CBD2[::-1]
 
 def plot_array(
     array: fa.Array,
+    species: AtomicSpecies = Rubidium87(),
 ) -> None:
 
-    plot = generate_panel_plot(array)
+    plot = generate_panel_plot(array, species)
 
     plot.servable()
 
 def generate_panel_plot(
     array: fa.Array,
+    species: AtomicSpecies
 ) -> pn.Column:
 
     if len(array.dims) == 0:
@@ -57,7 +60,8 @@ def generate_panel_plot(
         coords={dim: array.dims_dict[dim].np_array(space="pos") for dim in dims}
     )
 
-    from matterwave.rb87 import k_L
+    k_L = species.wavenumber
+
     xr_freq = xr.Dataset(
         data_vars={
             "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(array.values("freq"))**2))

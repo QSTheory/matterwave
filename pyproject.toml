@@ -42,13 +42,13 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 "dashboards" = [
     "fftarray[dashboards]",
-    "dask<=2024.12.0",
+    "dask<2025",
     "panel",
     "holoviews",
     "hvplot",
     "colorcet",
     "datashader",
-    "pyarrow",
+    "numba>=0.54.0",
 ]
 
 "dev" = [

@@ -44,11 +44,6 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
         psi = split_step(psi, mass=mass, dt=1e-5, V=harmonic_potential_1d)
         return psi, None
 
-    def nojax_scan(psi: fa.Array):
-        for _ in range(100):
-            psi, _ = split_step_scan_iteration(psi)
-        return psi, None
-
     if is_jax_array(psi._values):
         from jax.lax import scan
         psi, _ = scan(
@@ -58,7 +53,8 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
             length=100,
         )
     else:
-        psi, _ = nojax_scan(psi)
+        for _ in range(100):
+            psi, _ = split_step_scan_iteration(psi)
 
     e_pot = expectation_value(psi, harmonic_potential_1d)
     e_kin = get_e_kin(psi, m=mass)
@@ -108,11 +104,6 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
         psi = split_step(psi, dt=1e-4, mass=mass, V=V, is_complex=True)
         return psi, None
 
-    def nojax_scan(psi: fa.Array) -> fa.Array:
-        for _ in range(128):
-            psi, _ = step(psi)
-        return psi, None
-
     if is_jax_array(psi._values):
         from jax.lax import scan
         psi, _ = scan(
@@ -122,7 +113,8 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
             length=128,
         )
     else:
-        psi, _ = nojax_scan(psi)
+        for _ in range(128):
+            psi, _ = step(psi)
 
     energy_after = total_energy(psi)
     # check whether wafefunction is normalized

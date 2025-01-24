@@ -1,6 +1,7 @@
-
+from .constants import AtomicSpecies, Rubidium87
+import fftarray as fa
 from typing import List, Optional
-
+import numpy as np
 import panel as pn
 import pandas as pd # type: ignore
 import xarray as xr
@@ -9,17 +10,12 @@ import hvplot.xarray  # type: ignore # noqa
 from holoviews import streams # type: ignore
 import holoviews as hv
 from holoviews.operation.datashader import rasterize # type: ignore
-pn.extension()
-
 # TODO: check this out when finalising plotting routine
 from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
 silence(FIXED_SIZING_MODE, True)
 
-import numpy as np
-import fftarray as fa
-from .constants import AtomicSpecies, Rubidium87
-
+pn.extension()
 
 COLORS = ['#5BFF00', '#6400E6', '#FF0000'] # green, purple, red
 CONTOUR_MAP = cc.CET_CBD2[::-1]
@@ -27,16 +23,19 @@ CONTOUR_MAP = cc.CET_CBD2[::-1]
 
 def plot_array(
     array: fa.Array,
-    species: AtomicSpecies = Rubidium87(),
+    species: Optional[AtomicSpecies] = None,
 ) -> None:
 
-    plot = generate_panel_plot(array, species)
+    if species is None:
+        species = Rubidium87()
+
+    plot = generate_panel_plot(array, species.wavenumber)
 
     plot.servable()
 
 def generate_panel_plot(
     array: fa.Array,
-    species: AtomicSpecies
+    species_kL: float
 ) -> pn.Column:
 
     if len(array.dims) == 0:
@@ -60,13 +59,11 @@ def generate_panel_plot(
         coords={dim: array.dims_dict[dim].np_array(space="pos") for dim in dims}
     )
 
-    k_L = species.wavenumber
-
     xr_freq = xr.Dataset(
         data_vars={
             "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(array.values("freq"))**2))
         },
-        coords={kdim: array.dims_dict[dim].np_array(space="freq")/k_L*2*np.pi for dim, kdim in zip(dims,k_dims)}
+        coords={kdim: array.dims_dict[dim].np_array(space="freq")/species_kL*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
     )
 
     if len(dims) == 1:

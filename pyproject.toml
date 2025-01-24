@@ -58,7 +58,13 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "check" = [
     "fftarray[check]",
-    "matterwave[dashboards]",
+    "dask<2025",
+    "panel",
+    "holoviews",
+    "hvplot",
+    "colorcet",
+    "datashader",
+    "numba>=0.54.0",
 ]
 
 "doc" = [

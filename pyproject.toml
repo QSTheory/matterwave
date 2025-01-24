@@ -42,11 +42,13 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 "dashboards" = [
     "fftarray[dashboards]",
+    "dask<2025",
     "panel",
     "holoviews",
     "hvplot",
     "colorcet",
-    "datashader"
+    "datashader",
+    "numba>=0.54.0",
 ]
 
 "dev" = [
@@ -56,11 +58,13 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "check" = [
     "fftarray[check]",
+    "dask<2025",
     "panel",
     "holoviews",
     "hvplot",
     "colorcet",
-    "datashader"
+    "datashader",
+    "numba>=0.54.0",
 ]
 
 "doc" = [
@@ -85,8 +89,8 @@ source = "vcs"
 [tool.hatch.build.hooks.vcs]
 version-file = "_version.py"
 
-#[tool.hatch.metadata]
-#allow-direct-references = true
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.pixi.tasks]
 test = { cmd = ["python", "-m", "pytest", "-n", "auto"]}
@@ -98,12 +102,11 @@ test_all_group = { cmd = ["python", "-m", "pytest", "--include-slow", "--splitti
 # If the timings are out of date it just makes the split a bit less optimal.
 store_test_durations = { cmd = ["python", "-m", "pytest", "--include-slow", "--store-durations"]}
 
-ruff_all = { cmd = ["ruff", "check", "examples", "tests", "matterwave"]}
-mypy_nb = { cmd = ["nbqa", "mypy", "examples"]}
-mypy = { cmd = ["mypy", "examples", "matterwave", "tests"], depends-on = ["mypy_nb"]}
+ruff_all = { cmd = ["ruff", "check", "tests", "src/matterwave"]}
+mypy = { cmd = ["mypy", "src/matterwave", "tests"]}
 check = { depends-on = ["mypy", "ruff_all", "test"]}
-cov_html = { cmd = ["python", "-m", "pytest", "--cov=./matterwave", "--cov=./examples", "--cov-report=html"]}
-cov_xml = { cmd = ["python", "-m", "pytest", "--cov=./matterwave", "--cov=./examples", "--cov-report=xml"]}
+cov_html = { cmd = ["python", "-m", "pytest", "--cov=./src", "--cov-report=html"]}
+cov_xml = { cmd = ["python", "-m", "pytest", "--cov=./src", "--cov-report=xml"]}
 doc = { cmd = ["make"], "cwd" = "docs" }
 # TODO: Currently only tested on macOS. Would be nice to make it an --open option like in cargo.
 doc_open = { cmd = ["open", "docs/build/html/development/index.html"], depends-on = ["doc"] }
@@ -113,7 +116,8 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "linux-aarch64", "osx-arm64", "osx-64", "win-64"]
 
 [tool.pixi.pypi-dependencies]
-fftarray = { path = "../fftarray", editable = true }
+# fftarray = { path = "../fftarray", editable = true }
+fftarray = { git = "ssh://git@github.com/QSTheory/fftarray" }
 matterwave = { path = ".", editable = true }
 
 [tool.pixi.feature.jaxcuda]
@@ -135,6 +139,12 @@ python = "3.11.*"
 [tool.pixi.feature.py312.dependencies]
 python = "3.12.*"
 
+[tool.pixi.feature.py313.dependencies]
+python = "3.13.*"
+
+[tool.pixi.feature.numpy125.dependencies]
+numpy = "1.25.*"
+
 [tool.pixi.environments]
 # Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
 devcuda = ["dev", "check", "doc", "jaxcuda", "helpers", "dashboards"]
@@ -144,6 +154,8 @@ check = ["check", "jax", "helpers"]
 check310 = ["py310", "check", "jax", "helpers"]
 check311 = ["py311", "check", "jax", "helpers"]
 check312 = ["py312", "check", "jax", "helpers"]
+check313 = ["py313", "check", "jax", "helpers"]
+checknumpy125 = ["numpy125", "check", "jax", "helpers"]
 
 [tool.pixi.feature.doc.dependencies]
 pandoc = ">=3.5,<4"

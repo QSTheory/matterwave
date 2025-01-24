@@ -1,29 +1,16 @@
 """
 .. rubric:: The objects inside the tables can be imported directly from :py:mod:`matterwave`:
 
-Provided by :py:mod:`matterwave.split_step`:
-
-.. currentmodule:: matterwave.split_step
-
 .. autosummary::
    :nosignatures:
 
-   split_step
-   propagate
-
-
-Provided by :py:mod:`matterwave.wf_tools`:
-
-.. currentmodule:: matterwave.wf_tools
-
-.. autosummary::
-   :nosignatures:
-
-   norm_pos_space
-   norm_freq_space
-   normalize
+   expectation_value
    get_e_kin
-   set_ground_state
+   get_ground_state_ho
+   norm
+   normalize
+   propagate
+   split_step
 
 Example:
 
@@ -33,11 +20,12 @@ Example:
 	>>> from matterwave import normalize
 
 """
-from .split_step import (
+from ._src.split_step import (
    propagate as propagate,
    split_step as split_step,
 )
-from .wf_tools import (
+
+from ._src.wf_tools import (
    expectation_value as expectation_value,
    get_e_kin as get_e_kin,
    get_ground_state_ho as get_ground_state_ho,
@@ -46,6 +34,11 @@ from .wf_tools import (
    scalar_product as scalar_product,
 )
 
+from ._src.fftarray_plotting import (
+   plot_array as plot_array,
+   generate_panel_plot as generate_panel_plot,
+)
+
 __all__ = [
-    g for g in globals() if not g.startswith("_")
+   g for g in globals() if not g.startswith("_")
 ]

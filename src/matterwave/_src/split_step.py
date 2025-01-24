@@ -31,7 +31,7 @@ def get_V_prop(V: fa.Array, dt: complex) -> fa.Array:
 def split_step(psi: fa.Array, *,
                dt: float,
                mass: float,
-               V: Union[fa.Array, Callable[[fa.Array], Any]], # numpy ufuncs distort the type signature, actually this should be PosArray
+               V: Union[fa.Array, Callable[[fa.Array], Any]],
                is_complex: bool = False) -> fa.Array:
     """Split-step is a pseudo-spectral method to solve the time-dependent
     Schrödinger equation. The time evolution of a wavefunction is given by:
@@ -145,12 +145,6 @@ def split_step(psi: fa.Array, *,
     return psi
 
 
-
-# def mom_propagator(dt: float, mass: float):
-
-
-# return p_kernel
-
 # TODO: Do a proper numerical analysis.
 # Maybe use https://herbie.uwplse.org/
 # TODO Benchmark performance
@@ -175,13 +169,7 @@ def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Ar
     Array
         The freely propagated wavefunction :math:`\Psi(x,t+dt)`.
     """
-    # TODO: Use lazy phase factor
-    # p_sq = k_sq * hbar^2
-    # Propagator in p: value * jnp.exp(-1.j * dt * p_sq / (2*mass*hbar))
-    # => This formulation uses less numerical range to enable single precision floats
-
     # In 3D: kx**2+ky**2+kz**2
     k_sq = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
     return psi.into_space("freq") * fa.exp((-1.j * dt * hbar / (2*mass)) * k_sq.into_dtype("complex")) # type: ignore
-
 

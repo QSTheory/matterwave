@@ -1,14 +1,17 @@
 import fftarray as fa
-from matterwave.split_step import split_step
-from matterwave.wf_tools import expectation_value, get_ground_state_ho, get_e_kin, norm
-from matterwave.rb87 import m as m_rb87
-from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
+from matterwave import (
+    split_step, expectation_value, get_ground_state_ho, get_e_kin, norm,
+    constants
+)
+from tests.helpers import XPS, PrecisionSpec, precisions
 
 import numpy as np
 from scipy.constants import hbar, pi, Boltzmann
 import pytest
 from typing import Any
 from array_api_compat import is_jax_array
+
+m_rb87 = constants.Rubidium87.mass
 
 # Check whether a 1d FFTWave initialization in x with mapping
 # the 1d first excited state of the harmonic oscillator correctly
@@ -41,11 +44,6 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
         psi = split_step(psi, mass=mass, dt=1e-5, V=harmonic_potential_1d)
         return psi, None
 
-    def nojax_scan(psi: fa.Array):
-        for _ in range(100):
-            psi, _ = split_step_scan_iteration(psi)
-        return psi, None
-
     if is_jax_array(psi._values):
         from jax.lax import scan
         psi, _ = scan(
@@ -55,12 +53,13 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
             length=100,
         )
     else:
-        psi, _ = nojax_scan(psi)
+        for _ in range(100):
+            psi, _ = split_step_scan_iteration(psi)
 
     e_pot = expectation_value(psi, harmonic_potential_1d)
     e_kin = get_e_kin(psi, m=mass)
 
-    assert (e_pot + e_kin).values("pos") == pytest.approx(hbar*omega_x*3./2.)
+    assert e_pot + e_kin == pytest.approx(hbar*omega_x*3./2.)
 
 
 # # Test the split step method for imaginary time steps. Start with a ground state
@@ -95,19 +94,14 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
 
     V = 0.5 * mass * omega_x**2. * x**2.
     def total_energy(psi: fa.Array) -> float:
-        E_kin = get_e_kin(psi, m=mass, return_microK=True).values("pos")
-        E_pot = expectation_value(psi, V).values("pos") / (Boltzmann * 1e-6)
+        E_kin = get_e_kin(psi, m=mass, return_microK=True)
+        E_pot = expectation_value(psi, V) / (Boltzmann * 1e-6)
         return E_kin + E_pot
 
     energy_before = total_energy(psi)
 
     def step(psi: fa.Array, *_):
         psi = split_step(psi, dt=1e-4, mass=mass, V=V, is_complex=True)
-        return psi, None
-
-    def nojax_scan(psi: fa.Array) -> fa.Array:
-        for _ in range(128):
-            psi, _ = step(psi)
         return psi, None
 
     if is_jax_array(psi._values):
@@ -119,11 +113,12 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
             length=128,
         )
     else:
-        psi, _ = nojax_scan(psi)
+        for _ in range(128):
+            psi, _ = step(psi)
 
     energy_after = total_energy(psi)
     # check whether wafefunction is normalized
-    np.testing.assert_array_almost_equal(float(norm(psi).values("pos")), 1.)
+    np.testing.assert_array_almost_equal(float(norm(psi)), 1.)
     # check if energy is reduced (iteration towards ground state successfull)
     assert energy_after < energy_before
 
@@ -158,10 +153,10 @@ def test_1d_set_ground_state(xp: Any, precision: PrecisionSpec, eager: bool) -> 
     # quantum harmonic oscillator
     V = 0.5 * mass * omega_x**2. * x**2.
     # check if ground state is normalized
-    np.testing.assert_array_almost_equal(float(norm(psi).values("pos")), 1)
+    np.testing.assert_array_almost_equal(float(norm(psi)), 1)
     E_kin = get_e_kin(psi, m=mass, return_microK=True)
     E_pot = expectation_value(psi, V) / (Boltzmann * 1e-6)
-    E_tot = (E_kin + E_pot).values("pos")
+    E_tot = E_kin + E_pot
     E_tot_analytical = 0.5*omega_x*hbar / (Boltzmann * 1e-6)
     # check if its energy is equal to the analytical solution
     np.testing.assert_array_almost_equal(float(E_tot), float(E_tot_analytical))

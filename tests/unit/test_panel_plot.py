@@ -2,8 +2,8 @@ import pytest
 from typing import Any
 
 import fftarray as fa
-from matterwave.helpers import plot_array
-from matterwave.tests.helpers import XPS, PrecisionSpec, precisions
+from matterwave import plot_array
+from tests.helpers import XPS, PrecisionSpec, precisions
 
 @pytest.mark.parametrize("xp", XPS)
 @pytest.mark.parametrize("precision", precisions)

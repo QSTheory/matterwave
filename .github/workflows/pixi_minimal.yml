@@ -23,7 +23,7 @@ jobs:
     - name: Add GitHub to known_hosts
       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
     - name: Verify SSH access
-      run: ssh -T git@github.com
+      run: ssh -T git@github.com || true
     - name: Debug SSH Configuration
       run: |
         echo "SSH Key is loaded:"

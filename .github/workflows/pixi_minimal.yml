@@ -30,6 +30,7 @@ jobs:
         ssh-add -l
         echo "Known hosts:"
         cat ~/.ssh/known_hosts
+        export GIT_SSH_COMMAND="ssh -v"
     - uses: prefix-dev/setup-pixi@v0.8.1
       with:
         pixi-version: v0.40.3

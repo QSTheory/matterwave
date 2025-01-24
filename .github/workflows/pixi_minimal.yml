@@ -20,17 +20,20 @@ jobs:
       uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.PRIVATE_SSH_KEY }}
+    - name: Write SSH private key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.PRIVATE_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
     - name: Add GitHub to known_hosts
       run: ssh-keyscan github.com >> ~/.ssh/known_hosts
-    - name: Verify SSH access
-      run: ssh -T git@github.com || true
-    - name: Debug SSH Configuration
+    - name: Configure SSH
       run: |
-        echo "SSH Key is loaded:"
-        ssh-add -l
-        echo "Known hosts:"
-        cat ~/.ssh/known_hosts
-        export GIT_SSH_COMMAND="ssh -v"
+        echo "Host github.com" > ~/.ssh/config
+        echo "    HostName github.com" >> ~/.ssh/config
+        echo "    User git" >> ~/.ssh/config
+        echo "    IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+        chmod 600 ~/.ssh/config
     - uses: prefix-dev/setup-pixi@v0.8.1
       with:
         pixi-version: v0.40.3

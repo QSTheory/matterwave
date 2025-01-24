@@ -9763,8 +9763,8 @@ packages:
   requires_python: '>=3.8'
 - pypi: .
   name: matterwave
-  version: 0.4a1.dev62+g8a47dbc.d20250124
-  sha256: 592f2b8a447f81b00d9d414c71e6b18b93fb0b8206ef03f704760c92e086a435
+  version: 0.4a1.dev69+g8dee581.d20250124
+  sha256: 0e6c6c1837ffea6f00a50ff11968a0262f12368ad8e4b26b9ac002d84eceef12
   requires_dist:
   - scipy
   - colorcet ; extra == 'check'

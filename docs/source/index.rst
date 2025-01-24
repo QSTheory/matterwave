@@ -23,6 +23,8 @@ matterwave
    :caption: API documentation
 
    api/matterwave
+   api/split_step
+   api/constants
 
 ---------
 

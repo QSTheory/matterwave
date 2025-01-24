@@ -68,7 +68,17 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 
 "doc" = [
-    "fftarray[doc]"
+    "sphinx>=4.0",
+    "sphinx-autodoc-typehints",
+    "furo",
+    "sphinx-design",
+    "sphinx-copybutton",
+    "lxml_html_clean",
+    "nbsphinx",
+    "nbsphinx-link",
+    "myst-nb",
+    "m2r2",
+    "matplotlib",
 ]
 
 [tool.ruff]

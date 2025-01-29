@@ -89,7 +89,8 @@ def get_ground_state_ho(
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
     The ground state is centered at the origin in posiion and frequency space.
-
+The result is numerically normalized so that cut-off tails do not result in a norm smaller than ``1.``.
+This also means that even if the center is not sampled at all, the norm of the result is ``1.``.
     .. math::
 
         \Psi (\\vec{r}) = \\left( \\frac{m \omega}{\pi \hbar}  \\right)^\\frac{1}{4} e^{-\\frac{m\omega \\vec{r}^2}{2\hbar}}
@@ -126,6 +127,7 @@ def get_ground_state_ho(
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
     x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype)
     psi: fa.Array = (mass * omega / (pi*hbar))**(1./4.) * fa.exp(-(mass * omega * (x**2.)/(2.*hbar)))
+    # Numerically normalize so that the norm is `1.` even if the tails of the Gaussian are cut off.
     psi = normalize(psi)
     return psi
 

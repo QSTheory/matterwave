@@ -88,7 +88,7 @@ def get_ground_state_ho(
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
-    The ground state is centered at the origin in posiion and frequency space.
+    The ground state is centered at the origin in position and frequency space.
 The result is numerically normalized so that cut-off tails do not result in a norm smaller than ``1.``.
 This also means that even if the center is not sampled at all, the norm of the result is ``1.``.
     .. math::

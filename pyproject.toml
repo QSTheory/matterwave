@@ -42,12 +42,13 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 "dashboards" = [
     "fftarray[dashboards]",
-    "dask<2025",
     "panel",
     "holoviews",
     "hvplot",
     "colorcet",
     "datashader",
+    # numba is a dependency of datashader, pixi install currently (version
+    # 0.40.3) fails without setting this minimum version for numba
     "numba>=0.54.0",
 ]
 
@@ -58,7 +59,6 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "check" = [
     "fftarray[check]",
-    "dask<2025",
     "panel",
     "holoviews",
     "hvplot",

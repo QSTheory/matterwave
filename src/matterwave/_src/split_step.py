@@ -169,6 +169,9 @@ def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Ar
     Array
         The freely propagated wavefunction :math:`\Psi(x,t+dt)`.
     """
+    # p_sq = k_sq * hbar^2
+    # Propagator in p: value * jnp.exp(-1.j * dt * p_sq / (2*mass*hbar))
+    # => This formulation uses less numerical range to enable single precision floats
     # In 3D: kx**2+ky**2+kz**2
     k_sq = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
     return psi.into_space("freq") * fa.exp((-1.j * dt * hbar / (2*mass)) * k_sq.into_dtype("complex")) # type: ignore

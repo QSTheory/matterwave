@@ -62,7 +62,7 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> float:
 
     Returns
     -------
-    fa.Array
+    float
         The kinetic energy.
 
     See Also
@@ -90,8 +90,9 @@ def get_ground_state_ho(
     quantum harmonic oscillator (QHO). n equals the dimension of the given
     FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
     The ground state is centered at the origin in position and frequency space.
-The result is numerically normalized so that cut-off tails do not result in a norm smaller than ``1.``.
-This also means that even if the center is not sampled at all, the norm of the result is ``1.``.
+    The result is numerically normalized so that cut-off tails do not result in
+    a norm smaller than ``1.``. This also means that even if the center is not
+    sampled at all, the norm of the result is ``1.``.
     .. math::
 
         \Psi (\\vec{r}) = \\left( \\frac{m \omega}{\pi \hbar}  \\right)^\\frac{1}{4} e^{-\\frac{m\omega \\vec{r}^2}{2\hbar}}
@@ -122,7 +123,7 @@ This also means that even if the center is not sampled at all, the norm of the r
     fftarray.coords_from_dim
     """
     if omega and sigma_p:
-        raise ValueError("You can only specify ground state with either as omega or sigma_p, not both.")
+        raise ValueError("You can only the specify ground state width using either omega or sigma_p, not both.")
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."

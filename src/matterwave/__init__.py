@@ -34,11 +34,6 @@ from ._src.wf_tools import (
    scalar_product as scalar_product,
 )
 
-from ._src.fftarray_plotting import (
-   plot_array as plot_array,
-   generate_panel_plot as generate_panel_plot,
-)
-
 __all__ = [
    g for g in globals() if not g.startswith("_")
 ]

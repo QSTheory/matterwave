@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 import fftarray as fa
 
-from matterwave import plot_array
+from matterwave.plotting import plot_array
 from tests.helpers import XPS, PrecisionSpec, precisions
 
 @pytest.mark.parametrize("xp", XPS)

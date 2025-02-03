@@ -22,6 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "numpy>=1.25",
     "scipy",
 ]
 
@@ -38,12 +39,11 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
     "jax>=0.4.30",
 ]
 
-"dashboards" = [
-    "fftarray[helpers]",
-    "ipython",
-    "bokeh",
-    "ipykernel",
+"plotting" = [
     "panel",
+    "bokeh",
+    "pandas",
+    "xarray",
     "holoviews",
     "hvplot",
     "colorcet",
@@ -53,22 +53,23 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
     "numba>=0.54.0",
 ]
 
-"dev" = [
+"dashboards" = [
+    "matterwave[plotting]",
     "fftarray[helpers]",
-    "matterwave[jax, dashboards, check, doc]",
+    "ipython",
+    "ipykernel",
+]
+
+"dev" = [
+    "matterwave[jax, dashboards, check, doc, plotting]",
+    "fftarray[helpers]",
 ]
 
 "check" = [
+    "matterwave[jax, plotting]",
     "fftarray[helpers]",
-    "matterwave[jax]",
+    "array-api-compat>=1.9.1",
     "ipython",
-    "bokeh",
-    "panel",
-    "holoviews",
-    "hvplot",
-    "colorcet",
-    "datashader",
-    "numba>=0.54.0",
     "mypy>=0.910",
     "pytest",
     "pytest-cov",
@@ -79,10 +80,9 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 
 "doc" = [
+    "matterwave[jax, plotting]",
     "fftarray[helpers]",
-    "matterwave[jax]",
-    "sphinx>=4.2",
-    "sphinx-autodoc-typehints",
+    "sphinx>=6.1",
     "sphinx-book-theme>=1.0.1",
     "sphinx-design",
     "lxml_html_clean",
@@ -170,15 +170,15 @@ numpy = "1.25.*"
 
 [tool.pixi.environments]
 # Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
-devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards"]
-dev = ["dev", "check", "doc", "jax", "dashboards"]
-doc = ["doc", "jax"]
-check = ["check", "jax"]
-check310 = ["py310", "check", "jax"]
-check311 = ["py311", "check", "jax"]
-check312 = ["py312", "check", "jax"]
-check313 = ["py313", "check", "jax"]
-checknumpy125 = ["numpy125", "check", "jax"]
+devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards", "plotting"]
+dev = ["dev", "check", "doc", "jax", "dashboards", "plotting"]
+doc = ["doc", "jax", "plotting"]
+check = ["check", "jax", "plotting"]
+check310 = ["py310", "check", "jax", "plotting"]
+check311 = ["py311", "check", "jax", "plotting"]
+check312 = ["py312", "check", "jax", "plotting"]
+check313 = ["py313", "check", "jax", "plotting"]
+checknumpy125 = ["numpy125", "check", "jax", "plotting"]
 
 [tool.pixi.feature.doc.dependencies]
 pandoc = ">=3.5,<4"

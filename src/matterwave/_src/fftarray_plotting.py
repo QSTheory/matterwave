@@ -38,7 +38,7 @@ def plot_array(
 
 def generate_panel_plot(
     array: fa.Array,
-    species_kL: float
+    species_wavenumber: float
 ) -> pn.Column:
 
     if len(array.dims) == 0:
@@ -66,7 +66,7 @@ def generate_panel_plot(
         data_vars={
             "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.np_array("pos"))**2)
         },
-        coords={kdim: array.dims_dict[dim].np_array(space="freq")/species_kL*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
+        coords={kdim: array.dims_dict[dim].np_array(space="freq")/species_wavenumber*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
     )
 
     if len(dims) == 1:

@@ -4,7 +4,7 @@ from scipy.constants import pi, hbar, atomic_mass
 class AtomicSpecies(Protocol):
 
     wavelength: float # m
-    """Wavelength in m."""
+    """Optical transition wavelength in m."""
 
     mass: float # kg
     """Mass in kg."""

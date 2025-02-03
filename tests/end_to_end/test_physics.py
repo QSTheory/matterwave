@@ -1,15 +1,16 @@
+from typing import Any
+
+from array_api_compat import is_jax_array
 import fftarray as fa
+import numpy as np
+from scipy.constants import hbar, pi, Boltzmann
+import pytest
+
 from matterwave import (
     split_step, expectation_value, get_ground_state_ho, get_e_kin, norm,
     constants
 )
 from tests.helpers import XPS, PrecisionSpec, precisions
-
-import numpy as np
-from scipy.constants import hbar, pi, Boltzmann
-import pytest
-from typing import Any
-from array_api_compat import is_jax_array
 
 m_rb87 = constants.Rubidium87.mass
 

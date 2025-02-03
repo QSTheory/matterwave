@@ -1,6 +1,6 @@
-from .constants import AtomicSpecies, Rubidium87
-import fftarray as fa
 from typing import List, Optional
+
+import fftarray as fa
 import numpy as np
 import panel as pn
 import pandas as pd # type: ignore
@@ -13,6 +13,9 @@ from holoviews.operation.datashader import rasterize # type: ignore
 # TODO: check this out when finalising plotting routine
 from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
+
+from .constants import AtomicSpecies, Rubidium87
+
 silence(FIXED_SIZING_MODE, True)
 
 pn.extension()
@@ -54,14 +57,14 @@ def generate_panel_plot(
     # Maybe because of the non-standard dims attribute?
     xr_pos = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(dims)): (dims, np.array(np.abs(array.values("pos"))**2))
+            "|Psi({0})|^2".format(",".join(dims)): (dims, np.abs(array.np_array("pos")**2))
         },
         coords={dim: array.dims_dict[dim].np_array(space="pos") for dim in dims}
     )
 
     xr_freq = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.array(np.abs(array.values("freq"))**2))
+            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.np_array("pos"))**2)
         },
         coords={kdim: array.dims_dict[dim].np_array(space="freq")/species_kL*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
     )

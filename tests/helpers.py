@@ -1,4 +1,5 @@
-from typing import Literal, get_args, List
+from typing import Literal, Tuple, get_args
+
 import numpy as np
 import array_api_strict
 import array_api_compat
@@ -33,4 +34,4 @@ DTYPE_NAME = Literal[
 dtypes_names_all = get_args(DTYPE_NAME)
 
 PrecisionSpec = Literal["float32", "float64"]
-precisions: List[PrecisionSpec] = ["float32", "float64"]
+precisions: Tuple[PrecisionSpec] = get_args(PrecisionSpec)

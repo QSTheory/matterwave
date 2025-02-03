@@ -1,21 +1,22 @@
-import fftarray as fa
-from scipy.constants import pi, hbar, Boltzmann
-import numpy as np
 from typing import Optional, Any
 from functools import reduce
 
+import fftarray as fa
+from scipy.constants import pi, hbar, Boltzmann
+import numpy as np
+
 def norm(psi: fa.Array) -> float:
-    """Compute the norm of the given Array in its current space.
+    """Compute the norm of the given fa.Array in its current space.
 
     Parameters
     ----------
-    psi : Array
+    psi : fa.Array
         The wave function.
 
     Returns
     -------
     float
-        The norm of the Array.
+        The norm of the fa.Array.
 
     See Also
     --------
@@ -30,12 +31,12 @@ def normalize(psi: fa.Array) -> fa.Array:
 
     Parameters
     ----------
-    psi : Array
+    psi : fa.Array
         The initial wave function.
 
     Returns
     -------
-    Array
+    fa.Array
         The normalized wave function.
 
     See Also
@@ -45,12 +46,12 @@ def normalize(psi: fa.Array) -> fa.Array:
     norm_factor = psi.xp.sqrt(1./norm(psi))
     return psi * norm_factor
 
-def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
+def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> float:
     """Compute the kinetic energy of the given FFTWave with the given mass.
 
     Parameters
     ----------
-    psi : Array
+    psi : fa.Array
         The wave function.
     m : float
         The mass of the wave function.
@@ -61,7 +62,7 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
 
     Returns
     -------
-    Array
+    fa.Array
         The kinetic energy.
 
     See Also
@@ -79,11 +80,11 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> fa.Array:
 def get_ground_state_ho(
             dim: fa.Dimension,
             *,
+            mass: float,
             xp: Optional[Any] = None,
             dtype: Optional[Any] = None,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
-            mass: float,
         ) -> fa.Array:
     """Sets the wavefunction to the ground state of the isotropic n-dimensional
     quantum harmonic oscillator (QHO). n equals the dimension of the given
@@ -121,7 +122,7 @@ This also means that even if the center is not sampled at all, the norm of the r
     fftarray.coords_from_dim
     """
     if omega and sigma_p:
-        raise ValueError("You can only specify ground state width either as omega or sigma_p, not both.")
+        raise ValueError("You can only specify ground state with either as omega or sigma_p, not both.")
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
@@ -149,7 +150,7 @@ def scalar_product(a: fa.Array, b: fa.Array) -> float:
     """
     assert a.spaces == b.spaces
     bra_ket: fa.Array = fa.conj(a)*b # type: ignore
-    return fa.real(fa.integrate(bra_ket)).values(())
+    return fa.integrate(bra_ket).values(())
 
 
 def expectation_value(psi: fa.Array, op: fa.Array) -> float:

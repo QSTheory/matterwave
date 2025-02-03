@@ -1,18 +1,20 @@
-import numpy as np
 from typing import get_args
-import pytest
 
+import numpy as np
+import pytest
 import fftarray as fa
+
 from matterwave import scalar_product, norm
 
 @pytest.mark.parametrize("space", get_args(fa.Space))
 def test_scalar_product_norm(space: fa.Space) -> None:
     dim = fa.dim("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
-    arr = fa.coords_from_dim(dim, space)
-    arr_conj = fa.conj(arr)
-    sn = scalar_product(arr, arr_conj)
+    arr = fa.coords_from_dim(dim, space).into_dtype("complex") * (0.1 + 4.2j)
+    sn = scalar_product(arr, arr)
     n = norm(arr)
-    assert sn == n
+    np.testing.assert_almost_equal(np.imag(sn), 0.)
+    np.testing.assert_almost_equal(np.real(sn), n)
+
 
 @pytest.mark.parametrize("spaceA", get_args(fa.Space))
 @pytest.mark.parametrize("spaceB", get_args(fa.Space))
@@ -24,5 +26,5 @@ def test_scalar_product_orth(spaceA: fa.Space, spaceB: fa.Space) -> None:
     arr1 = fa.sin(x) * fa.sin(y)
     arr2 = fa.cos(x) * fa.cos(y)
     sp = scalar_product(arr1, arr2)
-    assert np.abs(sp) < 1.e-18
+    np.testing.assert_almost_equal(np.abs(sp), 0)
 

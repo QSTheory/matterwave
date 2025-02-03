@@ -139,6 +139,7 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
 [tool.pixi.pypi-dependencies]
 # fftarray = { path = "../fftarray", editable = true }
+# fftarray = { git = "https://github.com/QSTheory/fftarray.git" }
 fftarray = { git = "ssh://git@github.com/QSTheory/fftarray" }
 matterwave = { path = ".", editable = true }
 

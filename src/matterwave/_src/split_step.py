@@ -62,7 +62,7 @@ def split_step(psi: fa.Array, *,
 
     Parameters
     ----------
-    psi : Array
+    psi : fa.Array
         The initial wavefunction :math:`\Psi(x,t)`.
     dt : float
         The timestep :math:`dt`.
@@ -78,7 +78,7 @@ def split_step(psi: fa.Array, *,
 
     Returns
     -------
-    Array
+    fa.Array
         The wavefunction evolved in time: :math:`\Psi(x,t+dt)`.
 
     See Also
@@ -157,7 +157,7 @@ def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Ar
 
     Parameters
     ----------
-    psi : Array
+    psi : fa.Array
         The initial wavefunction :math:`\Psi(x,t)`.
     dt : Union[float, complex]
         The timestep :math:`dt`.
@@ -166,7 +166,7 @@ def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Ar
 
     Returns
     -------
-    Array
+    fa.Array
         The freely propagated wavefunction :math:`\Psi(x,t+dt)`.
     """
     # p_sq = k_sq * hbar^2

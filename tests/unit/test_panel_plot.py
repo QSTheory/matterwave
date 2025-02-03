@@ -1,7 +1,8 @@
-import pytest
 from typing import Any
 
+import pytest
 import fftarray as fa
+
 from matterwave import plot_array
 from tests.helpers import XPS, PrecisionSpec, precisions
 

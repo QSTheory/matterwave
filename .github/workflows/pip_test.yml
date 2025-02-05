@@ -4,7 +4,8 @@
 name: Run pytest via pip
 
 on:
-  pull_request:
+  push:
+    branches: [ "main" ]
 
 permissions:
   contents: read

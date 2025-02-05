@@ -3,11 +3,11 @@ from scipy.constants import hbar
 from typing import Callable, Union, Any
 
 from .wf_tools import normalize
-from fftarray import FFTArray
+import fftarray as fa
 from functools import reduce
 
 # Get the position propagator for a specified kernel and dt.
-def get_V_prop(V: FFTArray, dt: complex) -> FFTArray:
+def get_V_prop(V: fa.Array, dt: complex) -> fa.Array:
     """The propagator for the potential: :math:`e^{-\\frac{i}{\hbar} \hat V dt}`
     where the potential energy operator :math:`\hat V` is defined by `V_kernel`.
 
@@ -24,15 +24,15 @@ def get_V_prop(V: FFTArray, dt: complex) -> FFTArray:
         The function defining the potential energy propagator. Takes `dt` as
         required argument.
     """
-    return np.exp((-1.j / hbar * dt) * V)
+    return fa.exp((-1.j / hbar * dt) * V.into_dtype("complex"))
 
 
 # TODO Performance optimization of split-step merging
-def split_step(wf: FFTArray, *,
+def split_step(psi: fa.Array, *,
                dt: float,
                mass: float,
-               V: Union[FFTArray, Callable[[FFTArray], Any]], # numpy ufuncs distort the type signature, actually this should be PosArray
-               is_complex: bool = False) -> FFTArray:
+               V: Union[fa.Array, Callable[[fa.Array], Any]],
+               is_complex: bool = False) -> fa.Array:
     """Split-step is a pseudo-spectral method to solve the time-dependent
     Schrödinger equation. The time evolution of a wavefunction is given by:
 
@@ -62,7 +62,7 @@ def split_step(wf: FFTArray, *,
 
     Parameters
     ----------
-    wf : FFTWave
+    psi : fa.Array
         The initial wavefunction :math:`\Psi(x,t)`.
     dt : float
         The timestep :math:`dt`.
@@ -78,7 +78,7 @@ def split_step(wf: FFTArray, *,
 
     Returns
     -------
-    FFTWave
+    fa.Array
         The wavefunction evolved in time: :math:`\Psi(x,t+dt)`.
 
     See Also
@@ -102,7 +102,7 @@ def split_step(wf: FFTArray, *,
     `Examples <https://gitlab.projekt.uni-hannover.de/iqo-seckmeyer/unified_wf_2/-/tree/master/examples>`_.
 
     >>> from matterwave import split_step, set_ground_state
-    >>> from fftarray import FFTWave
+    >>> import fftarray as fa
     >>> from matterwave.rb87 import m as mass_rb87
     >>> from scipy.constants import pi
     >>> # Initialize constants
@@ -114,10 +114,10 @@ def split_step(wf: FFTArray, *,
     >>> def V_kernel(value: complex, x: float):
     >>>     return 0.5 * mass * omega_x**2. * x**2.
     >>> # Initialize the wavefunction
-    >>> wf_init = FFTWave(x_min = -200e-6, x_max = 200e-6, kx_offset = 0., nx = 2048)
-    >>> wf_init = set_ground_state(wf_init, omega=omega_x_init, mass=mass)
+    >>> dim = fa.dim_from_constraints("x", pos_min = -200e-6, pos_max = 200e-6, freq_offset = 0., n = 2048)
+    >>> psi_init = get_ground_state_ho(dim, omega=omega_x_init, mass=mass)
     >>> # Perform the split-step
-    >>> wf_final = split_step(wf_init, dt=dt, mass=mass, V_kernel=V_kernel, is_complex=True)
+    >>> psi_final = split_step(psi_init, dt=dt, mass=mass, V_kernel=V_kernel, is_complex=True)
     """
 
     if is_complex:
@@ -126,35 +126,29 @@ def split_step(wf: FFTArray, *,
         cmplx_factor = 1.
 
     # Apply half kinetic propagator
-    wf = propagate(wf, dt = cmplx_factor * 0.5*dt, mass = mass)
+    psi = propagate(psi, dt = cmplx_factor * 0.5*dt, mass = mass)
 
     # Apply potential propagator
     # TODO
-    wf = wf.into(space="pos")
-    if isinstance(V, FFTArray):
+    psi = psi.into_space("pos")
+    if isinstance(V, fa.Array):
         V_prop = get_V_prop(V = V, dt = cmplx_factor * dt)
     else:
-        V_prop = get_V_prop(V = V(wf), dt = cmplx_factor * dt)
-    wf = wf * V_prop
+        V_prop = get_V_prop(V = V(psi), dt = cmplx_factor * dt)
+    psi = psi * V_prop
 
     # Apply half kinetic propagator
-    wf = propagate(wf, dt = cmplx_factor * 0.5*dt, mass = mass)
+    psi = propagate(psi, dt = cmplx_factor * 0.5*dt, mass = mass)
 
     if is_complex:
-        wf = normalize(wf)
-    return wf
+        psi = normalize(psi)
+    return psi
 
-
-
-# def mom_propagator(dt: float, mass: float):
-
-
-# return p_kernel
 
 # TODO: Do a proper numerical analysis.
 # Maybe use https://herbie.uwplse.org/
 # TODO Benchmark performance
-def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FFTArray:
+def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Array:
     """Freely propagates the given wavefunction in time:
 
     .. math::
@@ -163,7 +157,7 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FFTArr
 
     Parameters
     ----------
-    wf : FFTWave
+    psi : fa.Array
         The initial wavefunction :math:`\Psi(x,t)`.
     dt : Union[float, complex]
         The timestep :math:`dt`.
@@ -172,16 +166,13 @@ def propagate(wf: FFTArray, *, dt: Union[float, complex], mass: float) -> FFTArr
 
     Returns
     -------
-    FFTWave
+    fa.Array
         The freely propagated wavefunction :math:`\Psi(x,t+dt)`.
     """
-    # TODO: Use lazy phase factor
     # p_sq = k_sq * hbar^2
     # Propagator in p: value * jnp.exp(-1.j * dt * p_sq / (2*mass*hbar))
     # => This formulation uses less numerical range to enable single precision floats
-
     # In 3D: kx**2+ky**2+kz**2
-    k_sq = reduce(lambda a,b: a+b, [(2*np.pi*dim.fft_array(tlib=wf.tlib, space="freq", eager=eager))**2. for dim, eager in zip(wf.dims, wf.eager)])
-    return wf.into(space="freq") * np.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
-
+    k_sq = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
+    return psi.into_space("freq") * fa.exp((-1.j * dt * hbar / (2*mass)) * k_sq.into_dtype("complex")) # type: ignore
 

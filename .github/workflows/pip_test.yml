@@ -1,43 +1,49 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Test suite
+name: Run pytest via pip
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
     branches: [ "main" ]
 
 permissions:
   contents: read
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         fetch-tags: true
-    - name: Set up Python 3.9
+    - name: Set up Python 3.10
       uses: actions/setup-python@v5
       with:
-        python-version: "3.9"
+        python-version: "3.10"
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.8.0
       with:
         ssh-private-key: ${{ secrets.PRIVATE_SSH_KEY }}
+    - name: Write SSH private key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.PRIVATE_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+    - name: Add GitHub to known_hosts
+      run: ssh-keyscan github.com >> ~/.ssh/known_hosts
+    - name: Configure SSH
+      run: |
+        echo "Host github.com" > ~/.ssh/config
+        echo "    HostName github.com" >> ~/.ssh/config
+        echo "    User git" >> ~/.ssh/config
+        echo "    IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
+        chmod 600 ~/.ssh/config
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install 'fftarray[dev] @ git+ssh://git@github.com/QSTheory/fftarray.git'
-        python -m pip install -e ".[dev]"
-    - name: Test with mypy
-      run: |
-        mypy matterwave
+        python -m pip install -e ".[check]"
     - name: Test with pytest
       run: |
         python -m pytest

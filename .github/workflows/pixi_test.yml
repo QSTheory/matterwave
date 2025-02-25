@@ -13,10 +13,10 @@ jobs:
     strategy:
       matrix:
         environment: [check310, check311, check312, check313, checknumpy125]
-        command: [ruff_all, mypy, test_all]
+        command: [ruff_all, mypy, test]
         # An option to run with multiple CI runners, currently saves 20s,
         # not worth the increased CI minutes usage.
-        # command: [mypy, test_all_group 1, test_all_group 2]
+        # command: [mypy, test_group 1, test_group 2]
     # env:
     #   N_GROUPS: 2
     steps:

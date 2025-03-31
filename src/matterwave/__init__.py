@@ -23,6 +23,7 @@ Example:
 from ._src.split_step import (
    propagate as propagate,
    split_step as split_step,
+   split_step_imag_time as split_step_imag_time,
 )
 
 from ._src.wf_tools import (

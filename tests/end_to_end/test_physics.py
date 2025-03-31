@@ -7,8 +7,8 @@ from scipy.constants import hbar, pi, Boltzmann
 import pytest
 
 from matterwave import (
-    split_step, expectation_value, get_ground_state_ho, get_e_kin, norm,
-    constants
+    split_step, split_step_imag_time, expectation_value, get_ground_state_ho,
+    get_e_kin, norm, constants
 )
 from tests.helpers import XPS, PrecisionSpec, precisions
 
@@ -49,7 +49,7 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
         from jax.lax import scan
         psi, _ = scan(
             f=split_step_scan_iteration,
-            init=psi.into_space("freq").into_factors_applied(eager),
+            init=psi.into_space("pos").into_factors_applied(eager),
             xs=None,
             length=100,
         )
@@ -71,7 +71,7 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
 @pytest.mark.parametrize("xp", XPS)
 @pytest.mark.parametrize("precision", precisions)
 @pytest.mark.parametrize("eager", [False, True])
-def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -> None:
+def test_1d_split_step_imag_time(xp: Any, precision: PrecisionSpec, eager: bool) -> None:
 
     mass = m_rb87
     omega_x_init = 2.*pi # angular freq. for initial (ground) state
@@ -102,14 +102,14 @@ def test_1d_split_step_complex(xp: Any, precision: PrecisionSpec, eager: bool) -
     energy_before = total_energy(psi)
 
     def step(psi: fa.Array, *_):
-        psi = split_step(psi, dt=1e-4, mass=mass, V=V, is_complex=True)
+        psi = split_step_imag_time(psi, dt=1e-4, mass=mass, V=V)
         return psi, None
 
     if is_jax_array(psi._values):
         from jax.lax import scan
         psi, _ = scan(
             f=step,
-            init=psi.into_space("freq").into_factors_applied(eager),
+            init=psi.into_space("pos").into_factors_applied(eager),
             xs=None,
             length=128,
         )

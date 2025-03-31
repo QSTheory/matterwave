@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.constants import hbar
-from typing import Callable, Union, Any
+from typing import Union
 
 from .wf_tools import normalize
 import fftarray as fa
@@ -28,11 +28,13 @@ def get_V_prop(V: fa.Array, dt: complex) -> fa.Array:
 
 
 # TODO Performance optimization of split-step merging
-def split_step(psi: fa.Array, *,
-               dt: float,
-               mass: float,
-               V: Union[fa.Array, Callable[[fa.Array], Any]],
-               is_complex: bool = False) -> fa.Array:
+def split_step(
+        psi: fa.Array,
+        *,
+        dt: Union[float, complex],
+        mass: float,
+        V: fa.Array,
+    ) -> fa.Array:
     """Split-step is a pseudo-spectral method to solve the time-dependent
     Schrödinger equation. The time evolution of a wavefunction is given by:
 
@@ -44,17 +46,17 @@ def split_step(psi: fa.Array, *,
 
     .. math::
 
-        e^{-\\frac{i}{\hbar}H dt} = e^{-\\frac{i}{2\hbar}\hat T dt} e^{-\\frac{i}{\hbar}\hat V dt} e^{-\\frac{i}{2\hbar}\hat T dt} + \mathcal O (dt^3).
+        e^{-\\frac{i}{\hbar}H dt} = e^{-\\frac{i}{2\hbar}\hat V dt} e^{-\\frac{i}{\hbar}\hat T dt} e^{-\\frac{i}{2\hbar}\hat V dt} + \mathcal O (dt^3).
 
     Note that the kinetic energy operator :math:`\hat T` is diagonal in
-    momentum space and that :math:`\hat V` is diagonal in position space. The
+    frequency space and that :math:`\hat V` is diagonal in position space. The
     split-step method utilizes this as follows.
 
-    1. Apply :math:`e^{-\\frac{i}{2\hbar}\hat T dt}` in momentum space.
-    2. Perform an FFT to get the wavefunction in position space.
-    3. Apply :math:`e^{-\\frac{i}{\hbar}\hat V dt}` in position space.
-    4. Perform an inverse FFT to get the wavefunction in momentum space.
-    5. Apply :math:`e^{-\\frac{i}{2\hbar}\hat T dt}` in momentum space.
+    1. Apply :math:`e^{-\\frac{i}{2\hbar}\hat V dt}` in position space.
+    2. Perform an FFT to get the wavefunction in frequency space.
+    3. Apply :math:`e^{-\\frac{i}{\hbar}\hat T dt}` in frequency space.
+    4. Perform an inverse FFT to get the wavefunction in position space.
+    5. Apply :math:`e^{-\\frac{i}{2\hbar}\hat V dt}` in position space.
 
     By this, the computation of the wavefunction's time evolution is
     significantly faster. Note that the timestep :math:`dt` should be chosen
@@ -68,13 +70,8 @@ def split_step(psi: fa.Array, *,
         The timestep :math:`dt`.
     mass : float
         The wavefunction's mass.
-    V_kernel : Callable[..., complex]
-        The kernel defining the potential V.
-    kwargs : Dict[str, Any]
-        Additional arguments to pass to `V_kernel`.
-    is_complex : bool, optional
-        Imaginary time evolution: :math:`dt \\rightarrow -i dt`
-        (the normalization of the wavefunction is included), by default False
+    V : fa.Array
+        The potential in position space.
 
     Returns
     -------
@@ -97,6 +94,81 @@ def split_step(psi: fa.Array, *,
 
     Example
     -------
+    This example shows how to perform a split-step application. For more
+    extensive explanations to this example, please visit
+    `Examples <https://gitlab.projekt.uni-hannover.de/iqo-seckmeyer/unified_wf_2/-/tree/master/examples>`_.
+
+    >>> from matterwave import split_step, set_ground_state
+    >>> import fftarray as fa
+    >>> from matterwave.rb87 import m as mass_rb87
+    >>> from scipy.constants import pi
+    >>> # Initialize constants
+    >>> mass = mass_rb87 # kg
+    >>> omega_x_init = 2.*pi*0.1 # Hz
+    >>> omega_x = 2.*pi # Hz
+    >>> dt = 1e-4 # s
+    >>> # Define the Dimension
+    >>> dim = fa.dim_from_constraints("x", pos_min = -200e-6, pos_max = 200e-6, freq_offset = 0., n = 2048)
+    >>> # Get the coordinates as an Array
+    >>> x = fa.coords_from_dim(dim, "pos")
+    >>> # Define the potential
+    >>> V = 0.5 * mass * omega_x**2. * x**2.
+    >>> # Initialize the wavefunction
+    >>> psi_init = get_ground_state_ho(dim, omega=omega_x_init, mass=mass)
+    >>> # Perform the split-step
+    >>> psi_final = split_step(psi_init, dt=dt, mass=mass, V=V)
+    """
+    # Compute potential propagator from potential with half the time step
+    V_prop = get_V_prop(V = V, dt = 0.5*dt)
+
+    # Apply half potential propagator
+    psi = psi.into_space("pos")
+    psi = psi * V_prop
+
+    # Apply kinetic propagator
+    psi = propagate(psi, dt = dt, mass = mass)
+
+    # Apply half potential propagator
+    psi = psi.into_space("pos")
+    psi = psi * V_prop
+
+    return psi
+
+def split_step_imag_time(
+        psi: fa.Array,
+        *,
+        dt: float,
+        mass: float,
+        V: fa.Array,
+    ) -> fa.Array:
+    """Imaginary time evolution: :math:`dt \\rightarrow -i dt` using split-step.
+    Normalization is included.
+
+    Parameters
+    ----------
+    psi : fa.Array
+        The initial wavefunction :math:`\Psi(x,t)`.
+    dt : float
+        The timestep :math:`dt`.
+    mass : float
+        The wavefunction's mass.
+    V : fa.Array
+        The potential in position space.
+
+    Returns
+    -------
+    fa.Array
+        The wavefunction after one imaginary time evolution step.
+
+    See Also
+    --------
+    matterwave.split_step.split_step :
+        Used to propagate the wavefunction.
+    matterwave.wf_tools.normalize :
+        Used to normalize the wavefunction.
+
+    Example
+    -------
     This example shows how to perform a split-step application with imaginary
     time. For more extensive explanations to this example, please visit
     `Examples <https://gitlab.projekt.uni-hannover.de/iqo-seckmeyer/unified_wf_2/-/tree/master/examples>`_.
@@ -110,38 +182,24 @@ def split_step(psi: fa.Array, *,
     >>> omega_x_init = 2.*pi*0.1 # Hz
     >>> omega_x = 2.*pi # Hz
     >>> dt = 1e-4 # s
-    >>> # Define the potential
-    >>> def V_kernel(value: complex, x: float):
-    >>>     return 0.5 * mass * omega_x**2. * x**2.
-    >>> # Initialize the wavefunction
+    >>> # Define the Dimension
     >>> dim = fa.dim_from_constraints("x", pos_min = -200e-6, pos_max = 200e-6, freq_offset = 0., n = 2048)
+    >>> # Get the coordinates as an Array
+    >>> x = fa.coords_from_dim(dim, "pos")
+    >>> # Define the potential
+    >>> V = 0.5 * mass * omega_x**2. * x**2.
+    >>> # Initialize the wavefunction
     >>> psi_init = get_ground_state_ho(dim, omega=omega_x_init, mass=mass)
     >>> # Perform the split-step
-    >>> psi_final = split_step(psi_init, dt=dt, mass=mass, V_kernel=V_kernel, is_complex=True)
+    >>> psi_final = split_step_imag_time(psi_init, dt=dt, mass=mass, V=V)
     """
-
-    if is_complex:
-        cmplx_factor = -1.j # Must be with minus since i**2 == -1
-    else:
-        cmplx_factor = 1.
-
-    # Apply half kinetic propagator
-    psi = propagate(psi, dt = cmplx_factor * 0.5*dt, mass = mass)
-
-    # Apply potential propagator
-    # TODO
-    psi = psi.into_space("pos")
-    if isinstance(V, fa.Array):
-        V_prop = get_V_prop(V = V, dt = cmplx_factor * dt)
-    else:
-        V_prop = get_V_prop(V = V(psi), dt = cmplx_factor * dt)
-    psi = psi * V_prop
-
-    # Apply half kinetic propagator
-    psi = propagate(psi, dt = cmplx_factor * 0.5*dt, mass = mass)
-
-    if is_complex:
-        psi = normalize(psi)
+    psi = split_step(
+        psi,
+        dt = -1.j * dt, # must be with minus since i**2 == -1
+        mass = mass,
+        V = V,
+    )
+    psi = normalize(psi)
     return psi
 
 

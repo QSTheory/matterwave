@@ -21,6 +21,5 @@ def test_psi(xp: Any, precision: PrecisionSpec) -> None:
     dim = fa.dim("x", n = 4, d_pos = 1., pos_min = 0.3, freq_min = 0.7)
     arr = fa.coords_from_dim(dim, "pos", xp=xp, dtype=getattr(xp, precision)).into_eager(False)
     # TODO Actually test the result and not just that it does not crash.
-    def pot_func(psi: fa.Array) -> fa.Array:
-        return fa.abs(psi)**2
-    split_step(arr, dt=1., mass=1., V=pot_func)
+    V = fa.abs(arr)**2
+    split_step(arr, dt=1., mass=1., V=V)

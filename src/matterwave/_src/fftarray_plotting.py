@@ -9,7 +9,6 @@ import colorcet as cc # type: ignore
 import hvplot.xarray  # type: ignore # noqa
 from holoviews import streams # type: ignore
 import holoviews as hv
-from holoviews.operation.datashader import rasterize # type: ignore
 # TODO: check this out when finalising plotting routine
 from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
@@ -79,7 +78,9 @@ def generate_panel_plot(
         )
 
     else:
-
+        # Only import datashader if it is actually needed because it tends to
+        # make imports extremely slow.
+        from holoviews.operation.datashader import rasterize # type: ignore
         def interactive_plots(data_array: xr.Dataset) -> pn.Column:
 
             # Different variables for position and frequency space

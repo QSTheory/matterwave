@@ -116,13 +116,12 @@ allow-direct-references = true
 
 [tool.pixi.tasks]
 test = { cmd = ["python", "-m", "pytest", "-n", "auto"]}
-test_all = { cmd = ["python", "-m", "pytest", "--include-slow", "-n", "auto"]}
 
-test_all_group = { cmd = ["python", "-m", "pytest", "--include-slow", "--splitting-algorithm", "least_duration", "--splits", "$N_GROUPS", "--group", "$GROUP_ID"]}
+test_group = { cmd = ["python", "-m", "pytest", "--splitting-algorithm", "least_duration", "--splits", "$N_GROUPS", "--group", "$GROUP_ID"]}
 # These durations are used to estimate the best split of tests when parallelizing.
 # This only needs to be run when tests changed significantly.
 # If the timings are out of date it just makes the split a bit less optimal.
-store_test_durations = { cmd = ["python", "-m", "pytest", "--include-slow", "--store-durations"]}
+store_test_durations = { cmd = ["python", "-m", "pytest", "--store-durations"]}
 
 ruff_all = { cmd = ["ruff", "check", "tests", "src/matterwave"]}
 mypy = { cmd = ["mypy", "src/matterwave", "tests"]}

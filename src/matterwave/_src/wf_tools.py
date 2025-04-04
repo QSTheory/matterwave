@@ -44,7 +44,8 @@ def normalize(psi: fa.Array) -> fa.Array:
     matterwave.wf_tools.norm
     """
     norm_factor = psi.xp.sqrt(1./norm(psi))
-    return psi * norm_factor
+    # A bare tensor and an fftarray.Array cannot be combined inside torch.compile.
+    return psi * fa.array(norm_factor, [], [], xp=psi.xp, dtype=psi.dtype, device=psi.device)
 
 def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> float:
     """Compute the kinetic energy of the given FFTWave with the given mass.
@@ -83,6 +84,7 @@ def get_ground_state_ho(
             mass: float,
             xp: Optional[Any] = None,
             dtype: Optional[Any] = None,
+            device: Optional[Any] = None,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
         ) -> fa.Array:
@@ -127,7 +129,7 @@ def get_ground_state_ho(
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
-    x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype)
+    x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype, device=device)
     psi: fa.Array = (mass * omega / (pi*hbar))**(1./4.) * fa.exp(-(mass * omega * (x**2.)/(2.*hbar)))
     # Numerically normalize so that the norm is `1.` even if the tails of the Gaussian are cut off.
     psi = normalize(psi)

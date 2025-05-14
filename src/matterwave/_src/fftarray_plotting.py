@@ -9,7 +9,6 @@ import colorcet as cc # type: ignore
 import hvplot.xarray  # type: ignore # noqa
 from holoviews import streams # type: ignore
 import holoviews as hv
-from holoviews.operation.datashader import rasterize # type: ignore
 # TODO: check this out when finalising plotting routine
 from bokeh.core.validation import silence
 from bokeh.core.validation.warnings import FIXED_SIZING_MODE
@@ -57,16 +56,16 @@ def generate_panel_plot(
     # Maybe because of the non-standard dims attribute?
     xr_pos = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(dims)): (dims, np.abs(array.np_array("pos")**2))
+            "|Psi({0})|^2".format(",".join(dims)): (dims, np.abs(array.values("pos", xp=np)**2))
         },
-        coords={dim: array.dims_dict[dim].np_array(space="pos") for dim in dims}
+        coords={dim: array.dims_dict[dim].values("pos", xp=np) for dim in dims}
     )
 
     xr_freq = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.np_array("pos"))**2)
+            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.values("pos", xp=np))**2)
         },
-        coords={kdim: array.dims_dict[dim].np_array(space="freq")/species_wavenumber*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
+        coords={kdim: array.dims_dict[dim].values("freq", xp=np)/species_wavenumber*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
     )
 
     if len(dims) == 1:
@@ -79,7 +78,9 @@ def generate_panel_plot(
         )
 
     else:
-
+        # Only import datashader if it is actually needed because it tends to
+        # make imports extremely slow.
+        from holoviews.operation.datashader import rasterize # type: ignore
         def interactive_plots(data_array: xr.Dataset) -> pn.Column:
 
             # Different variables for position and frequency space

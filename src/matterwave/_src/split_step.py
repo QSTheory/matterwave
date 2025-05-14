@@ -6,26 +6,6 @@ from .wf_tools import normalize
 import fftarray as fa
 from functools import reduce
 
-# Get the position propagator for a specified kernel and dt.
-def get_V_prop(V: fa.Array, dt: complex) -> fa.Array:
-    """The propagator for the potential: :math:`e^{-\\frac{i}{\hbar} \hat V dt}`
-    where the potential energy operator :math:`\hat V` is defined by `V_kernel`.
-
-    :meta private:
-
-    Parameters
-    ----------
-    V_kernel : Callable[..., complex]
-        Returns the potential energy propagator.
-
-    Returns
-    -------
-    Callable[..., complex]
-        The function defining the potential energy propagator. Takes `dt` as
-        required argument.
-    """
-    return fa.exp((-1.j / hbar * dt) * V.into_dtype("complex"))
-
 
 # TODO Performance optimization of split-step merging
 def split_step(
@@ -119,7 +99,7 @@ def split_step(
     >>> psi_final = split_step(psi_init, dt=dt, mass=mass, V=V)
     """
     # Compute potential propagator from potential with half the time step
-    V_prop = get_V_prop(V = V, dt = 0.5*dt)
+    V_prop = fa.exp((-1.j / hbar * dt) * V)
 
     # Apply half potential propagator
     psi = psi.into_space("pos")
@@ -193,12 +173,25 @@ def split_step_imag_time(
     >>> # Perform the split-step
     >>> psi_final = split_step_imag_time(psi_init, dt=dt, mass=mass, V=V)
     """
-    psi = split_step(
-        psi,
-        dt = -1.j * dt, # must be with minus since i**2 == -1
-        mass = mass,
-        V = V,
-    )
+    # Compute potential propagator from potential with half the time step
+    V_prop = fa.exp((-0.5 / hbar * dt) * V)
+
+    # Compute kinetic propagator, same as propagate() but with real valued exponent
+    k_sq = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
+    T_prop = fa.exp((-1. * dt * hbar / (2*mass)) * k_sq)
+
+    # Apply half potential propagator
+    psi = psi.into_space("pos")
+    psi = psi * V_prop
+
+    # Apply kinetic propagator
+    psi = psi.into_space("freq")
+    psi = psi * T_prop
+
+    # Apply half potential propagator
+    psi = psi.into_space("pos")
+    psi = psi * V_prop
+
     psi = normalize(psi)
     return psi
 
@@ -232,5 +225,5 @@ def propagate(psi: fa.Array, *, dt: Union[float, complex], mass: float) -> fa.Ar
     # => This formulation uses less numerical range to enable single precision floats
     # In 3D: kx**2+ky**2+kz**2
     k_sq = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
-    return psi.into_space("freq") * fa.exp((-1.j * dt * hbar / (2*mass)) * k_sq.into_dtype("complex")) # type: ignore
+    return psi.into_space("freq") * fa.exp((-1.j * dt * hbar / (2*mass)) * k_sq) # type: ignore
 

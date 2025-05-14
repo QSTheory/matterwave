@@ -11,7 +11,7 @@ from functools import reduce
 def split_step(
         psi: fa.Array,
         *,
-        dt: Union[float, complex],
+        dt: float,
         mass: float,
         V: fa.Array,
     ) -> fa.Array:

@@ -40,12 +40,12 @@ jobs:
         echo "    User git" >> ~/.ssh/config
         echo "    IdentityFile ~/.ssh/id_ed25519" >> ~/.ssh/config
         chmod 600 ~/.ssh/config
-    - name: Disable Git LFS
-      # Can be removed when fftarray can be installed via pip
-      run: export GIT_LFS_SKIP_SMUDGE=1
     - uses: prefix-dev/setup-pixi@v0.8.1
       with:
         pixi-version: v0.40.3
         environments: ${{ matrix.environment }}
         cache: true
+      env:
+        # Can be removed when fftarray can be installed via pip
+        GIT_LFS_SKIP_SMUDGE: 1
     - run: pixi run -e ${{ matrix.environment }} ${{ matrix.command }}

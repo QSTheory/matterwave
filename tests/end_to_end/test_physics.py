@@ -5,6 +5,7 @@ import fftarray as fa
 import numpy as np
 from scipy.constants import hbar, pi, Boltzmann
 import pytest
+import math
 
 from matterwave import (
     split_step, split_step_imag_time, expectation_value, get_ground_state_ho,
@@ -35,9 +36,9 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
         dynamically_traced_coords=False
     )
     x = fa.coords_from_dim(x_dim, "pos", xp=xp, dtype=getattr(xp, precision)).into_eager(eager)
-    psi = 1./np.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
+    psi = 1./math.sqrt(2.)*(mass*omega_x/(pi*hbar))**(1./4.) * \
             fa.exp(-mass*omega_x*x**2./(2.*hbar)) * \
-                2*np.sqrt(mass*omega_x/hbar)*x
+                2*math.sqrt(mass*omega_x/hbar)*x
 
     harmonic_potential_1d = 0.5 * mass * omega_x**2. * x**2.
 
@@ -60,7 +61,7 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
     e_pot = expectation_value(psi, harmonic_potential_1d)
     e_kin = get_e_kin(psi, m=mass)
 
-    assert e_pot + e_kin == pytest.approx(hbar*omega_x*3./2.)
+    np.testing.assert_array_almost_equal(e_pot + e_kin, hbar*omega_x*3./2.)
 
 
 # # Test the split step method for imaginary time steps. Start with a ground state

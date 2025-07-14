@@ -39,5 +39,8 @@ jobs:
         pixi-version: v0.40.3
         environments: ${{ matrix.environment }}
         cache: true
+      env:
+        # Can be removed when fftarray can be installed via pip
+        GIT_LFS_SKIP_SMUDGE: 1
     # Here we do not split mypy and test into a matrix to save resources.
     - run: pixi run -e ${{ matrix.environment }} check

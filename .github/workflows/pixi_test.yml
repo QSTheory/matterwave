@@ -45,4 +45,7 @@ jobs:
         pixi-version: v0.40.3
         environments: ${{ matrix.environment }}
         cache: true
-    - run: GIT_LFS_SKIP_SMUDGE=1 pixi run -e ${{ matrix.environment }} ${{ matrix.command }}
+    - run: pixi run -e ${{ matrix.environment }} ${{ matrix.command }}
+      # Can be removed when fftarray can be installed via pip:
+      env:
+        GIT_LFS_SKIP_SMUDGE: 1

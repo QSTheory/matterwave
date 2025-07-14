@@ -40,4 +40,7 @@ jobs:
         environments: ${{ matrix.environment }}
         cache: true
     # Here we do not split mypy and test into a matrix to save resources.
-    - run: GIT_LFS_SKIP_SMUDGE=1 pixi run -e ${{ matrix.environment }} check
+    - run: pixi run -e ${{ matrix.environment }} check
+      # Can be removed when fftarray can be installed via pip:
+      env:
+        GIT_LFS_SKIP_SMUDGE: 1

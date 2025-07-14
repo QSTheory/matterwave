@@ -15,7 +15,7 @@ authors = [
 ]
 description = "A library for matter wave propagation built on top of fftarray."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -55,19 +55,19 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "dashboards" = [
     "matterwave[plotting]",
-    "fftarray[helpers]",
+    "fftarray[z3]",
     "ipython",
     "ipykernel",
 ]
 
 "dev" = [
     "matterwave[jax, dashboards, check, doc, plotting]",
-    "fftarray[helpers]",
+    "fftarray[z3]",
 ]
 
 "check" = [
     "matterwave[jax, plotting]",
-    "fftarray[helpers]",
+    "fftarray[z3]",
     "array-api-compat>=1.9.1",
     "ipython",
     "mypy>=0.910",
@@ -81,10 +81,11 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 "doc" = [
     "matterwave[jax, plotting]",
-    "fftarray[helpers]",
+    "fftarray[z3]",
     "sphinx>=6.1",
     "sphinx-book-theme>=1.0.1",
     "sphinx-design",
+    "sphinx-copybutton",
     "lxml_html_clean",
     "nbsphinx",
     "nbsphinx-link",
@@ -128,9 +129,10 @@ mypy = { cmd = ["mypy", "src/matterwave", "tests"]}
 check = { depends-on = ["mypy", "ruff_all", "test"]}
 cov_html = { cmd = ["python", "-m", "pytest", "--cov=./src", "--cov-report=html"]}
 cov_xml = { cmd = ["python", "-m", "pytest", "--cov=./src", "--cov-report=xml"]}
-doc = { cmd = ["make"], "cwd" = "docs" }
+doc_all_versions = { cmd = ["make", "all_versions"], "cwd" = "docs" }
+doc_local = { cmd = ["make", "local"], "cwd" = "docs" }
 # TODO: Currently only tested on macOS. Would be nice to make it an --open option like in cargo.
-doc_open = { cmd = ["open", "docs/build/html/development/index.html"], depends-on = ["doc"] }
+doc_open = { cmd = ["open", "docs/build/html/local/index.html"], depends-on = ["doc_local"] }
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -152,9 +154,6 @@ system-requirements = {cuda = "12"}
 "matterwave" = {version="*", extras=["jax"]}
 "jax" = {version=">=0.4.30", extras=["cuda12"]}
 
-[tool.pixi.feature.py310.dependencies]
-python = "3.10.*"
-
 [tool.pixi.feature.py311.dependencies]
 python = "3.11.*"
 
@@ -170,7 +169,6 @@ devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards", "plotting"]
 dev = ["dev", "check", "doc", "jax", "dashboards", "plotting"]
 doc = ["doc", "jax", "plotting"]
 check = ["check", "jax", "plotting"]
-check310 = ["py310", "check", "jax", "plotting"]
 check311 = ["py311", "check", "jax", "plotting"]
 check312 = ["py312", "check", "jax", "plotting"]
 check313 = ["py313", "check", "jax", "plotting"]

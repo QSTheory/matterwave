@@ -45,4 +45,4 @@ jobs:
         pixi-version: v0.40.3
         environments: ${{ matrix.environment }}
         cache: true
-    - run: pixi run -e ${{ matrix.environment }} ${{ matrix.command }}
+    - run: GIT_LFS_SKIP_SMUDGE=1 pixi run -e ${{ matrix.environment }} ${{ matrix.command }}

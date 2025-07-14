@@ -40,4 +40,4 @@ matterwave
    .. toctree::
       :maxdepth: 1
 
-      Documentation <documentation>
+      Building and editing the documentation <documentation>

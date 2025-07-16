@@ -99,8 +99,8 @@ def generate_panel_plot(
 
             # Stream that enables choosing points by clicking within the contour plot
             pointer_stream = streams.SingleTap(
-                x=getattr(get_array_dim(array, dims[1]), center_attribute_name),
-                y=getattr(get_array_dim(array, dims[0]), center_attribute_name),
+                x=float(getattr(get_array_dim(array, dims[1]), center_attribute_name)),
+                y=float(getattr(get_array_dim(array, dims[0]), center_attribute_name)),
             )
 
             # Creates a contour plot and 2 and 3 line plots for the 2d and 3d case, respectively

@@ -1,25 +1,4 @@
-"""
-.. rubric:: The objects inside the tables can be imported directly from :py:mod:`matterwave`:
 
-.. autosummary::
-   :nosignatures:
-
-   expectation_value
-   get_e_kin
-   get_ground_state_ho
-   norm
-   normalize
-   propagate
-   split_step
-
-Example:
-
-.. code-block:: python
-
-	>>> from matterwave import split_step
-	>>> from matterwave import normalize
-
-"""
 from ._src.split_step import (
    propagate as propagate,
    split_step as split_step,

@@ -5,7 +5,7 @@ import fftarray as fa
 from scipy.constants import pi, hbar, Boltzmann
 import numpy as np
 
-def norm(psi: fa.Array) -> float:
+def norm(psi: fa.Array):
     """Compute the norm of the given fa.Array in its current space.
 
     Parameters
@@ -15,12 +15,13 @@ def norm(psi: fa.Array) -> float:
 
     Returns
     -------
-    float
-        The norm of the fa.Array.
+    Any
+        The norm of the fa.Array as a scalar array of the used Array API implementation.
+        If ``xp.sum`` returns a Python float this would be a Python float.
 
     See Also
     --------
-    matterwave.wf_tools.normalize
+    matterwave.normalize
     """
     abs_sq: fa.Array = fa.abs(psi)**2 # type: ignore
     arr_norm: fa.Array = fa.integrate(abs_sq)
@@ -41,13 +42,13 @@ def normalize(psi: fa.Array) -> fa.Array:
 
     See Also
     --------
-    matterwave.wf_tools.norm
+    matterwave.norm
     """
     norm_factor = psi.xp.sqrt(1./norm(psi))
     return psi * norm_factor
 
-def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> float:
-    """Compute the kinetic energy of the given FFTWave with the given mass.
+def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False):
+    """Compute the kinetic energy of the given wave function with the given mass.
 
     Parameters
     ----------
@@ -57,13 +58,12 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False) -> float:
         The mass of the wave function.
     return_microK : bool, optional
         Return the kinetic energy in microK instead of Joule.
-        This option exists since returning it in Joule does not work in single
-        precision (fp32) due to internal accuracy limitations, by default False.
 
     Returns
     -------
-    float
-        The kinetic energy.
+    Any
+        The kinetic energy as a scalar array of the used Array API implementation.
+        If ``xp.sum`` returns a Python float this would be a Python float.
 
     See Also
     --------
@@ -86,32 +86,32 @@ def get_ground_state_ho(
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
         ) -> fa.Array:
-    """Sets the wavefunction to the ground state of the isotropic n-dimensional
-    quantum harmonic oscillator (QHO). n equals the dimension of the given
-    FFTWave. Either ``omega`` or ``sigma_p`` has to be specified.
+    """Returns a wave function with the ground state of the 1-dimensional
+    quantum harmonic oscillator (QHO). Either ``omega`` or ``sigma_p`` has to be specified.
     The ground state is centered at the origin in position and frequency space.
     The result is numerically normalized so that cut-off tails do not result in
     a norm smaller than ``1.``. This also means that even if the center is not
     sampled at all, the norm of the result is ``1.``.
+
     .. math::
 
-        \Psi (\\vec{r}) = \\left( \\frac{m \omega}{\pi \hbar}  \\right)^\\frac{1}{4} e^{-\\frac{m\omega \\vec{r}^2}{2\hbar}}
+        \\Psi (x) = \\left( \\frac{m \\omega}{\\pi \\hbar}  \\right)^\\frac{1}{4} e^{-\\frac{m\\omega x^2}{2\\hbar}}
 
     Parameters
     ----------
-    wf : FFTWave
-        The initial FFTWave.
-    mass : float
-        The mass of the FFTWave.
-    omega : Optional[float], optional
+    dim:
+        Dimension in which to create the QHO.
+    mass:
+        The mass of the matter wave.
+    omega:
         The angular frequency of the QHO, by default None
-    sigma_p : Optional[float], optional
+    sigma_p:
         The momentum uncertainty, by default None
 
     Returns
     -------
-    FFTWave
-        The ground state FFTWave.
+    fa.Array
+        The ground state.
 
     Raises
     ------
@@ -134,7 +134,7 @@ def get_ground_state_ho(
     return psi
 
 
-def scalar_product(a: fa.Array, b: fa.Array) -> float:
+def scalar_product(a: fa.Array, b: fa.Array):
     """Take the scalar product between two wave functions.
 
     Parameters
@@ -146,15 +146,16 @@ def scalar_product(a: fa.Array, b: fa.Array) -> float:
 
     Returns
     -------
-    float
-        Scalar product.
+    Any
+        The Scalar product as a scalar array of the used Array API implementation.
+        If ``xp.sum`` returns a Python float this would be a Python float.
     """
     assert a.spaces == b.spaces
     bra_ket: fa.Array = fa.conj(a)*b # type: ignore
     return fa.integrate(bra_ket).values(())
 
 
-def expectation_value(psi: fa.Array, op: fa.Array) -> float:
+def expectation_value(psi: fa.Array, op: fa.Array):
     """Compute the expectation value of the given diagonal operator on the
     fa.Array in the space of the operator.
 
@@ -167,8 +168,9 @@ def expectation_value(psi: fa.Array, op: fa.Array) -> float:
 
     Returns
     -------
-    float
-        The expectation value of the given diagonal operator.
+    Any
+        The expectation value of the given diagonal operator as a scalar array of the used Array API implementation.
+        If ``xp.sum`` returns a Python float this would be a Python float.
     """
     psi_in_op_space = psi.into_space(op.spaces)
     # We can move the operator out of the scalar product because it is diagonal.

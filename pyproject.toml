@@ -125,7 +125,10 @@ version-file = "_version.py"
 allow-direct-references = true
 
 [tool.pixi.tasks]
-test = { cmd = ["python", "-m", "pytest", "-n", "auto"]}
+# Test snippets in documentation doc-strings.
+test_src_docstrings = { cmd = ["python", "-m", "pytest", "src/*", "--doctest-modules"]}
+# Run all tests
+test = { cmd = ["python", "-m", "pytest", "-n", "auto"], depends-on = ["test_src_docstrings"]}
 
 test_group = { cmd = ["python", "-m", "pytest", "--splitting-algorithm", "least_duration", "--splits", "$N_GROUPS", "--group", "$GROUP_ID"]}
 # These durations are used to estimate the best split of tests when parallelizing.

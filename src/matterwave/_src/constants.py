@@ -32,7 +32,7 @@ class Rubidium87(AtomicSpecies):
     References
     ----------
     .. [1] Daniel A. Steck, "Rubidium 87 D Line Data", available online at
-    http://steck.us/alkalidata (revision 2.3.3, 28 May 2024).
+        http://steck.us/alkalidata (revision 2.3.3, 28 May 2024).
     """
     mass = 86.909 * atomic_mass
     wavelength = 780.032e-9

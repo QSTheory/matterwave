@@ -17,9 +17,17 @@ description = "A library for matter wave propagation built on top of fftarray."
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
-    "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    'Typing :: Typed',
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
 ]
 dependencies = [
     "numpy>=2.0",
@@ -36,7 +44,7 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 
 [project.optional-dependencies]
 "jax" = [
-    "jax>=0.4.30",
+    "jax>=0.4.33",
 ]
 
 "plotting" = [
@@ -63,6 +71,7 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 "dev" = [
     "matterwave[jax, dashboards, check, doc, plotting]",
     "fftarray[z3]",
+    "hatch",
 ]
 
 "check" = [
@@ -95,7 +104,7 @@ Issues = "https://github.com/QSTheory/matterwave/issues"
 ]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -152,10 +161,15 @@ system-requirements = {cuda = "12"}
 # List jax cuda depdency here as linux-64 specific as workaround Part 2 for https://github.com/prefix-dev/pixi/issues/1051
 [tool.pixi.feature.jaxcuda.target.linux-64.pypi-dependencies]
 "matterwave" = {version="*", extras=["jax"]}
-"jax" = {version=">=0.4.30", extras=["cuda12"]}
+"jax" = {version=">=0.4.33", extras=["cuda12"]}
 
 [tool.pixi.feature.py311.dependencies]
 python = "3.11.*"
+# array-api-strict 2.4.0 does not support NumPy interoperability with Python 3.11.
+# Therefore we need to stay on 2.3.1 for Python 3.11.
+array-api-strict = "==2.3.1"
+# pixi fails to solve with for numba without this bound.
+numpy = "==2.2"
 
 [tool.pixi.feature.py312.dependencies]
 python = "3.12.*"

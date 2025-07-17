@@ -3,6 +3,7 @@
 [**Intro**](#intro) | [**Installation**](#installation)
 
 This library is a collection of routines and constants to help building simulations in the field of matter wave optics built on top of the [FFTArray](https://github.com/QSTheory/fftarray) library.
+See also the [documentation](https://qstheory.github.io/matterwave/main/) of matterwave.
 
 ## Intro
 

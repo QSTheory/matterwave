@@ -7040,8 +7040,8 @@ packages:
   requires_python: '>=3.8'
 - pypi: ./
   name: matterwave
-  version: 0.4a1.dev61+g02f2953
-  sha256: 35f1db867bfb430205549ba895fde84efdff7e3a6201d4bf51ae23ab5354b709
+  version: 0.4a1.dev62+g3b02150
+  sha256: 42f72b1b2839ee4f20c83d57dd3ae34e9d6f03928c02b81d803aaae3013db33e
   requires_dist:
   - numpy>=2.0
   - scipy

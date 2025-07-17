@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.abspath("../../examples/"))
 
 # ---------------------------- Project information --------------------------- #
 
-project = "matterwave"
-copyright = "2024, The matterwave authors. NumPy and Jax are copyright the respective authors."
+project = "Matterwave"
+copyright = "2024, The matterwave authors."
 author = "The matterwave authors"
 
 version = ""
@@ -58,7 +58,7 @@ intersphinx_mapping = {
     "panel": ("https://panel.holoviz.org/", None),
     "jax": ("https://jax.readthedocs.io/en/latest/", None),
     "xarray": ("https://docs.xarray.dev/en/stable/", None),
-    # "fftarray": TODO,
+    "fftarray": ("https://qstheory.github.io/fftarray/main/", None),
 }
 
 templates_path = ['_templates']
@@ -93,8 +93,7 @@ html_theme_options = dict(
     home_page_in_toc=False,
     primary_sidebar_end=["version-switcher"],
     switcher=dict(
-        json_url="http://localhost:8000/versions.json",  # for local testing
-        # json_url="https://QSTheory.github.io/matterwave/versions.json", # when published
+        json_url="https://QSTheory.github.io/matterwave/versions.json", # when published
         version_match=os.getenv("VERSION", "main"),
     ),
     icon_links=[

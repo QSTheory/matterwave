@@ -149,6 +149,10 @@ doc_local = { cmd = ["make", "local"], "cwd" = "docs" }
 # TODO: Currently only tested on macOS. Would be nice to make it an --open option like in cargo.
 doc_open = { cmd = ["open", "docs/build/html/local/index.html"], depends-on = ["doc_local"] }
 
+# Build the release artifacts.
+clean_dist_dir = { cmd = ["rm", "-rf", "dist/"] }
+build_wheel = { cmd = ["hatch", "build"], depends-on = ["clean_dist_dir"] }
+
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]

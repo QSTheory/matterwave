@@ -83,6 +83,7 @@ def get_ground_state_ho(
             mass: float,
             xp: Optional[Any] = None,
             dtype: Optional[Any] = None,
+            device: Optional[Any] = None,
             omega: Optional[float] = None,
             sigma_p: Optional[float] = None,
         ) -> fa.Array:
@@ -99,6 +100,12 @@ def get_ground_state_ho(
 
     Parameters
     ----------
+    xp:
+        Array API namespace to use for the creation of the :py:class:`fftarray.Array`.
+    dtype:
+        dtype passed to :py:func:`fftarray.coords_from_dim`.
+    device:
+        device passed to :py:func:`fftarray.coords_from_dim`.
     dim:
         Dimension in which to create the QHO.
     mass:
@@ -127,7 +134,7 @@ def get_ground_state_ho(
     if sigma_p:
         omega =  2 * (sigma_p**2) / (mass * hbar)
     assert omega, "Momentum width has not been specified via either sigma_p or omega."
-    x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype)
+    x: fa.Array = fa.coords_from_dim(dim, "pos", xp=xp, dtype=dtype, device=device)
     psi: fa.Array = (mass * omega / (pi*hbar))**(1./4.) * fa.exp(-(mass * omega * (x**2.)/(2.*hbar)))
     # Numerically normalize so that the norm is `1.` even if the tails of the Gaussian are cut off.
     psi = normalize(psi)

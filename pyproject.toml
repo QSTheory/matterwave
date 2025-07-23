@@ -72,10 +72,15 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
 ]
 
 "dev" = [
-    "matterwave[jax, dashboards, check, doc, plotting]",
+    "matterwave[jax, dashboards, check, doc, plotting, deploy]",
     "fftarray[dimsolver]",
-    "hatch",
 ]
+
+"deploy" = [
+    "hatch",
+    "twine",
+]
+
 
 "check" = [
     "matterwave[jax, plotting]",
@@ -186,8 +191,8 @@ python = "3.13.*"
 
 [tool.pixi.environments]
 # Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
-devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards", "plotting"]
-dev = ["dev", "check", "doc", "jax", "dashboards", "plotting"]
+devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards", "plotting", "deploy"]
+dev = ["dev", "check", "doc", "jax", "dashboards", "plotting", "deploy"]
 doc = ["doc", "jax", "plotting"]
 check = ["check", "jax", "plotting"]
 check311 = ["py311", "check", "jax", "plotting"]

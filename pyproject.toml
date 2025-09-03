@@ -32,7 +32,7 @@ classifiers = [
 dependencies = [
     "numpy>=2.0",
     "scipy",
-    "fftarray",
+    "fftarray>=0.5",
 ]
 
 [build-system]

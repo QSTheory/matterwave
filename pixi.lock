@@ -7119,10 +7119,10 @@ packages:
   requires_python: '>=3.8'
 - pypi: ./
   name: matterwave
-  version: 0.4a1.dev68+gec5b8b592.d20250903
-  sha256: 1df1b44dd41ec3ebefd74d8172338826caad50a71d1f86f0b0630eaf0ce975b2
+  version: 0.4a1.dev69+g2f2c3b6b7.d20250903
+  sha256: c26a74c104484c3493ac8d8884e8d839a7ed018aafe627d08a34e76c0e42b059
   requires_dist:
-  - fftarray
+  - fftarray>=0.5
   - numpy>=2.0
   - scipy
   - array-api-compat>=1.9.1 ; extra == 'check'

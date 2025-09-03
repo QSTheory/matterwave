@@ -47,14 +47,14 @@ def normalize(psi: fa.Array) -> fa.Array:
     norm_factor = psi.xp.sqrt(1./norm(psi))
     return psi * norm_factor
 
-def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False):
+def get_e_kin(psi: fa.Array, mass: float, return_microK: bool = False):
     """Compute the kinetic energy of the given wave function with the given mass.
 
     Parameters
     ----------
     psi : fa.Array
         The wave function.
-    m : float
+    mass : float
         The mass of the wave function.
     return_microK : bool, optional
         Return the kinetic energy in microK instead of Joule.
@@ -72,7 +72,7 @@ def get_e_kin(psi: fa.Array, m: float, return_microK: bool = False):
     # Move hbar**2/(2*m) until after accumulation to allow accumulation also in fp32.
     # Otherwise the individual values typically underflow to zero.
     kin_op = reduce(lambda a,b: a+b, [(2*np.pi*fa.coords_from_arr(psi, dim.name, "freq"))**2. for dim in psi.dims])
-    post_factor = hbar**2/(2*m)
+    post_factor = hbar**2/(2*mass)
     if return_microK:
         post_factor /= (Boltzmann * 1e-6)
     return expectation_value(psi, kin_op) * post_factor

@@ -59,7 +59,7 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
             psi, _ = split_step_scan_iteration(psi)
 
     e_pot = expectation_value(psi, harmonic_potential_1d)
-    e_kin = get_e_kin(psi, m=mass)
+    e_kin = get_e_kin(psi, mass=mass)
 
     np.testing.assert_array_almost_equal(e_pot + e_kin, hbar*omega_x*3./2.)
 
@@ -96,7 +96,7 @@ def test_1d_split_step_imag_time(xp: Any, precision: PrecisionSpec, eager: bool)
 
     V = 0.5 * mass * omega_x**2. * x**2.
     def total_energy(psi: fa.Array) -> float:
-        E_kin = get_e_kin(psi, m=mass, return_microK=True)
+        E_kin = get_e_kin(psi, mass=mass, return_microK=True)
         E_pot = expectation_value(psi, V) / (Boltzmann * 1e-6)
         return E_kin + E_pot
 
@@ -156,7 +156,7 @@ def test_1d_set_ground_state(xp: Any, precision: PrecisionSpec, eager: bool) -> 
     V = 0.5 * mass * omega_x**2. * x**2.
     # check if ground state is normalized
     np.testing.assert_array_almost_equal(float(norm(psi)), 1)
-    E_kin = get_e_kin(psi, m=mass, return_microK=True)
+    E_kin = get_e_kin(psi, mass=mass, return_microK=True)
     E_pot = expectation_value(psi, V) / (Boltzmann * 1e-6)
     E_tot = E_kin + E_pot
     E_tot_analytical = 0.5*omega_x*hbar / (Boltzmann * 1e-6)

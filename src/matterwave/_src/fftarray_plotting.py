@@ -63,7 +63,7 @@ def generate_panel_plot(
 
     xr_freq = xr.Dataset(
         data_vars={
-            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.values("pos", xp=np))**2)
+            "|Psi({0})|^2".format(",".join(k_dims)): (k_dims, np.abs(array.values("freq", xp=np))**2)
         },
         coords={kdim: array.dims_dict[dim].values("freq", xp=np)/species_wavenumber*2*np.pi for dim, kdim in zip(dims, k_dims, strict=True)}
     )

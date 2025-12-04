@@ -195,7 +195,6 @@ python = "3.12.*"
 python = "3.13.*"
 
 [tool.pixi.environments]
-# Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
 devcuda = ["dev", "jaxcuda"]
 dev = ["dev"]
 doc = ["doc"]

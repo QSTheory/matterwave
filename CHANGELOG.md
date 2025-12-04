@@ -3,6 +3,8 @@
 Best viewed [here](https://qstheory.github.io/matterwave/main/changelog.html).
 
 ## Unreleased
+
+## Matterwave 0.5.2 (04 December 2025)
 - Fixed that `plot_array` and `generate_panel_plot` plotted the position space values instead of the frequency space values in the frequency space plot.
 - Fixed potential propagator in `split_step` which effectively led to propagation with 2*V
 

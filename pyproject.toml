@@ -46,7 +46,7 @@ Repository = "https://github.com/QSTheory/matterwave"
 Issues = "https://github.com/QSTheory/matterwave/issues"
 Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
 
-[project.optional-dependencies]
+[dependency-groups]
 "jax" = [
     "jax>=0.4.33",
 ]
@@ -60,21 +60,23 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
     "hvplot",
     "colorcet",
     "datashader",
-    # numba is a dependency of datashader, pixi install currently (version
-    # 0.40.3) fails without setting this minimum version for numba
-    "numba>=0.54.0",
 ]
 
 "dashboards" = [
-    "matterwave[plotting]",
     "fftarray[dimsolver]",
     "ipython",
     "ipykernel",
+    {include-group = "plotting"},
 ]
 
 "dev" = [
-    "matterwave[jax, dashboards, check, doc, plotting, deploy]",
     "fftarray[dimsolver]",
+    {include-group = "check"},
+    {include-group = "dashboards"},
+    {include-group = "deploy"},
+    {include-group = "doc"},
+    {include-group = "jax"},
+    {include-group = "plotting"},
 ]
 
 "deploy" = [
@@ -84,7 +86,6 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
 
 
 "check" = [
-    "matterwave[jax, plotting]",
     "fftarray[dimsolver]",
     "array-api-compat>=1.9.1",
     "ipython",
@@ -95,10 +96,11 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
     "pytest-split",
     "array-api-strict>=2.3.0",
     "ruff",
+    {include-group = "jax"},
+    {include-group = "plotting"},
 ]
 
 "doc" = [
-    "matterwave[jax, plotting]",
     "fftarray[dimsolver]",
     "sphinx>=6.1",
     "sphinx-book-theme>=1.0.1",
@@ -110,6 +112,8 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
     "myst-nb",
     "m2r2",
     "matplotlib",
+    {include-group = "jax"},
+    {include-group = "plotting"},
 ]
 
 [tool.ruff]
@@ -159,7 +163,7 @@ doc_open = { cmd = ["open", "docs/build/html/local/index.html"], depends-on = ["
 clean_dist_dir = { cmd = ["rm", "-rf", "dist/"] }
 build_wheel = { cmd = ["hatch", "build"], depends-on = ["clean_dist_dir"] }
 
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
@@ -191,14 +195,13 @@ python = "3.12.*"
 python = "3.13.*"
 
 [tool.pixi.environments]
-# Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
-devcuda = ["dev", "check", "doc", "jaxcuda", "dashboards", "plotting", "deploy"]
-dev = ["dev", "check", "doc", "jax", "dashboards", "plotting", "deploy"]
-doc = ["doc", "jax", "plotting"]
-check = ["check", "jax", "plotting"]
-check311 = ["py311", "check", "jax", "plotting"]
-check312 = ["py312", "check", "jax", "plotting"]
-check313 = ["py313", "check", "jax", "plotting"]
+devcuda = ["dev", "jaxcuda"]
+dev = ["dev"]
+doc = ["doc"]
+check = ["check"]
+check311 = ["py311", "check"]
+check312 = ["py312", "check"]
+check313 = ["py313", "check"]
 
 [tool.pixi.feature.doc.dependencies]
 pandoc = ">=3.5,<4"

@@ -217,7 +217,6 @@ python = "3.12.*"
 python = "3.13.*"
 
 [tool.pixi.environments]
-# Recursive optional dependencies are currently ignored by pixi environments: https://github.com/prefix-dev/pixi/issues/2024
 # As of 3 Dec 2025 numba prevents a solution for CPython 3.14.
 devcuda = ["py313", "dev", "jaxcuda"]
 dev = ["py313", "dev"]

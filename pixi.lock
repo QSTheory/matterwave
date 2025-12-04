@@ -5938,8 +5938,8 @@ packages:
   requires_python: '>=3.9'
 - pypi: ./
   name: matterwave
-  version: 0.5.2.dev5+ge106179aa.d20251204
-  sha256: a4ee69e147aa99a522772ef671cde1c1b6f6caf75612257baceec6b1ee454361
+  version: 0.5.2.dev6+g8b7328c3c.d20251204
+  sha256: 222697ed98fb166f5704dc650604830e207a0bd684552fc723005f540f28b9cc
   requires_dist:
   - fftarray>=0.5
   - numpy>=2.0

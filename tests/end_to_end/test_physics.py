@@ -70,6 +70,8 @@ def test_1d_x_split_step_ground_state_phase_evolution(xp: Any, eager: bool) -> N
 
     mass = m_rb87
     omega_x = 2*pi
+    dt = 1e-5
+    n_steps = 100
 
     x_dim = fa.dim_from_constraints("x",
         pos_min=-100e-6,
@@ -90,7 +92,7 @@ def test_1d_x_split_step_ground_state_phase_evolution(xp: Any, eager: bool) -> N
     harmonic_potential_1d = 0.5 * mass * omega_x**2. * x**2.
 
     def split_step_scan_iteration(psi, *_):
-        psi = split_step(psi, mass=mass, dt=1e-5, V=harmonic_potential_1d)
+        psi = split_step(psi, mass=mass, dt=dt, V=harmonic_potential_1d)
         return psi, None
 
     if is_jax_array(psi_init._values):
@@ -99,18 +101,18 @@ def test_1d_x_split_step_ground_state_phase_evolution(xp: Any, eager: bool) -> N
             f=split_step_scan_iteration,
             init=psi_init.into_space("pos").into_factors_applied(eager),
             xs=None,
-            length=100,
+            length=n_steps,
         )
     else:
         psi = psi_init
-        for _ in range(100):
+        for _ in range(n_steps):
             psi, _ = split_step_scan_iteration(psi)
 
 
     np.testing.assert_array_almost_equal(
         psi.values("pos"),
         (psi_init*xp.exp(
-            xp.asarray(-1.j * omega_x / 2 * 100*1e-5)
+            xp.asarray(-1.j * omega_x / 2 * n_steps*dt)
         )).values("pos")
     )
 

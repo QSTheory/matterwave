@@ -116,6 +116,10 @@ Changelog = "https://qstheory.github.io/matterwave/main/changelog.html"
     {include-group = "plotting"},
 ]
 
+"build_pip_deps" = [
+    "pip"
+]
+
 [tool.ruff]
 target-version = "py311"
 
@@ -163,9 +167,27 @@ doc_open = { cmd = ["open", "docs/build/html/local/index.html"], depends-on = ["
 clean_dist_dir = { cmd = ["rm", "-rf", "dist/"] }
 build_wheel = { cmd = ["hatch", "build"], depends-on = ["clean_dist_dir"] }
 
+
+# Commands to recreate the requirements.txt file from the current state of pypi
+
+clean_build_pip_deps = { cmd = ["pixi", "clean", "-e", "build-pip-deps"] }
+install_pip_check_deps = { cmd = [
+    "python", "-m",
+    "pip", "install", "-e", ".", "--group", "check",
+] }
+create_requirements_txt = { cmd = ["python", "-m", "pip", "freeze", "--exclude", "matterwave", ">", "requirements.txt"] }
+
+[tool.pixi.tasks.update_requirements_txt]
+depends-on = [
+    { task = "clean_build_pip_deps" },
+    { task = "install_pip_check_deps", environment = "build-pip-deps" },
+    { task = "create_requirements_txt", environment = "build-pip-deps" },
+]
+
+
 [tool.pixi.workspace]
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
 
 [tool.pixi.pypi-dependencies]
 matterwave = { path = ".", editable = true }
@@ -195,13 +217,17 @@ python = "3.12.*"
 python = "3.13.*"
 
 [tool.pixi.environments]
-devcuda = ["dev", "jaxcuda"]
-dev = ["dev"]
-doc = ["doc"]
-check = ["check"]
+# As of 3 Dec 2025 numba prevents a solution for CPython 3.14.
+devcuda = ["py313", "dev", "jaxcuda"]
+dev = ["py313", "dev"]
+doc = ["py313", "doc"]
+check = ["py313", "check"]
 check311 = ["py311", "check"]
 check312 = ["py312", "check"]
 check313 = ["py313", "check"]
+
+# Environment to create the requirements.txt used in the pip CI test
+build-pip-deps = ["py313", "build_pip_deps"]
 
 [tool.pixi.feature.doc.dependencies]
 pandoc = ">=3.5,<4"

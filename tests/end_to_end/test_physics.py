@@ -64,6 +64,59 @@ def test_1d_x_split_step(xp: Any, precision: PrecisionSpec, eager: bool) -> None
     np.testing.assert_array_almost_equal(e_pot + e_kin, hbar*omega_x*3./2.)
 
 
+@pytest.mark.parametrize("xp", XPS)
+@pytest.mark.parametrize("eager", [False, True])
+def test_1d_x_split_step_ground_state_phase_evolution(xp: Any, eager: bool) -> None:
+
+    mass = m_rb87
+    omega_x = 2*pi
+    dt = 1e-5
+    n_steps = 100
+
+    x_dim = fa.dim_from_constraints("x",
+        pos_min=-100e-6,
+        pos_max=100e-6,
+        freq_middle=0.,
+        n=1024,
+        dynamically_traced_coords=False
+    )
+    x = fa.coords_from_dim(x_dim, "pos", xp=xp, dtype=xp.float64).into_eager(eager)
+    psi_init = get_ground_state_ho(
+        dim=x_dim,
+        xp=xp,
+        dtype=xp.float64,
+        omega=omega_x,
+        mass=mass,
+    ).into_eager(eager)
+
+    harmonic_potential_1d = 0.5 * mass * omega_x**2. * x**2.
+
+    def split_step_scan_iteration(psi, *_):
+        psi = split_step(psi, mass=mass, dt=dt, V=harmonic_potential_1d)
+        return psi, None
+
+    if is_jax_array(psi_init._values):
+        from jax.lax import scan
+        psi, _ = scan(
+            f=split_step_scan_iteration,
+            init=psi_init.into_space("pos").into_factors_applied(eager),
+            xs=None,
+            length=n_steps,
+        )
+    else:
+        psi = psi_init
+        for _ in range(n_steps):
+            psi, _ = split_step_scan_iteration(psi)
+
+
+    np.testing.assert_array_almost_equal(
+        psi.values("pos"),
+        (psi_init*xp.exp(
+            xp.asarray(-1.j * omega_x / 2 * n_steps*dt)
+        )).values("pos")
+    )
+
+
 # # Test the split step method for imaginary time steps. Start with a ground state
 # # of different angular frequency than the system and evolve it towards the
 # # system's ground state. The resulting total energy should be lower than the

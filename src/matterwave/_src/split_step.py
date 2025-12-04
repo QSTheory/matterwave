@@ -100,7 +100,7 @@ def split_step(
     >>> psi_final = split_step(psi_init, dt=dt, mass=mass, V=V)
     """
     # Compute potential propagator from potential with half the time step
-    V_prop = fa.exp((-1.j / hbar * dt) * V)
+    V_prop = fa.exp((-0.5j / hbar * dt) * V)
 
     # Apply half potential propagator
     psi = psi.into_space("pos")

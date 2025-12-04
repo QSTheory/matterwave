@@ -221,6 +221,7 @@ python = "3.13.*"
 devcuda = ["py313", "dev", "jaxcuda"]
 dev = ["py313", "dev"]
 doc = ["py313", "doc"]
+deploy = ["py313", "deploy"]
 check = ["py313", "check"]
 check311 = ["py311", "check"]
 check312 = ["py312", "check"]
